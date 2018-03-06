@@ -1,0 +1,27 @@
+{
+  "fluid": {
+    "major": 0,
+    "minor": 0
+  },
+  "pull": {
+    "protocol": "http",
+    "name": "TicTacToe",
+    "host": "compo-ai.herokuapp.com",
+    "path": "/api/tictactoe",
+    "meta": "Meta",
+    "port": 80,
+    "error": "Error"
+  },
+  "schema": {
+    "Meta": "Unit",
+    "Error": "Unit",
+    "Hello": {
+      "m": [
+        {
+          "target": "String"
+        }
+      ],
+      "o": "String"
+    }
+  }
+}

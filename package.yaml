@@ -1,0 +1,39 @@
+name: compo-ai
+version: "0.0.0"
+maintainer: Joe Vargas
+synopsis: Compo AI
+description: Compo AI
+stability: experimental
+license: MIT
+extra-source-files:
+- package.yaml
+- stack.yaml
+- README.md
+ghc-options: -Wall
+library:
+  dependencies:
+    - base >= 4.9 && < 5
+    - fluid-idl
+    - fluid-idl-scotty
+    - mtl
+    - text
+    - safe
+  default-extensions:
+    - GeneralizedNewtypeDeriving
+    - NamedFieldPuns
+    - OverloadedStrings
+    - FlexibleInstances
+    - MultiParamTypeClasses
+  source-dirs: src
+executables:
+  compo-ai:
+    dependencies:
+      - base
+      - compo-ai
+    ghc-options:
+      - -rtsopts
+      - -threaded
+      - -with-rtsopts=-N
+      - -Wall
+    main: Main.hs
+    source-dirs: app
