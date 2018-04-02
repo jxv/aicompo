@@ -1,0 +1,114 @@
+{
+  "fluid": {
+    "major": 0,
+    "minor": 0
+  },
+  "pull": {
+    "protocol": "http",
+    "name": "TicTacToe",
+    "host": "compo-ai.herokuapp.com",
+    "port": 80,
+    "path": "/api/tictactoe",
+    "meta": "AccessToken",
+    "error": "Error"
+  },
+  "schema": {
+    "AccessToken": "String",
+    "UserId": "String",
+    "Group": "String",
+    "GameId": "String",
+    "GameToken": "String",
+    "Player": [
+      "X",
+      "O"
+    ],
+    "Error": [
+      "AccessToken",
+      "GameId",
+      "GameToken",
+      "MoveLoc",
+      "Timeout"
+    ],
+    "Board": {
+      "m": [
+        {
+          "cells": {
+            "n": "List",
+            "p": {
+              "n": "List",
+              "p": {
+                "n": "Option",
+                "p": "Player"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Final": [
+      "Won",
+      "Loss",
+      "Tied"
+    ],
+    "Loc": {
+      "m": [
+        {
+          "x": "Int"
+        },
+        {
+          "y": "Int"
+        }
+      ]
+    },
+    "State": {
+      "m": [
+        {
+          "board": "Board"
+        },
+        {
+          "final": {
+            "n": "Option",
+            "p": "Final"
+          }
+        }
+      ]
+    },
+    "Users": {
+      "m": [
+        {
+          "x": "UserId"
+        },
+        {
+          "o": "UserId"
+        }
+      ]
+    },
+    "Init": {
+      "m": [
+        {
+          "gameId": "GameId"
+        },
+        {
+          "users": "Users"
+        },
+        {
+          "state": "State"
+        }
+      ]
+    },
+    "PostStart": {
+      "o": "Init"
+    },
+    "PostMove": {
+      "m": [
+        {
+          "loc": "Loc"
+        },
+        {
+          "gameId": "GameId"
+        }
+      ],
+      "o": "State"
+    }
+  }
+}

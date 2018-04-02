@@ -17,9 +17,20 @@ module CompoAi.Api.TicTacToe.Server
   , ticTacToe'spec
   , ticTacToe'Scotty'Post
   , ticTacToe'Scotty'Get
-  , V0.Meta(..)
+  , V0.AccessToken(..)
+  , V0.UserId(..)
+  , V0.Group(..)
+  , V0.GameId(..)
+  , V0.GameToken(..)
+  , V0.Board(..)
+  , V0.Loc(..)
+  , V0.State(..)
+  , V0.Users(..)
+  , V0.Init(..)
+  , V0.PostMove(..)
+  , V0.Player(..)
   , V0.Error(..)
-  , V0.Hello(..)
+  , V0.Final(..)
   , V0.TicTacToe'Service(..)
   , V0.TicTacToe'Thrower(..)
   , V0.ticTacToe'pull
@@ -36,9 +47,20 @@ import qualified CompoAi.Api.TicTacToe.Major0 as V0
   , ticTacToe'version
   , ticTacToe'pull
   , ticTacToe'spec
-  , Meta(..)
+  , AccessToken(..)
+  , UserId(..)
+  , Group(..)
+  , GameId(..)
+  , GameToken(..)
+  , Board(..)
+  , Loc(..)
+  , State(..)
+  , Users(..)
+  , Init(..)
+  , PostMove(..)
+  , Player(..)
   , Error(..)
-  , Hello(..)
+  , Final(..)
   )
 
 ticTacToe'handlerMap
@@ -47,7 +69,7 @@ ticTacToe'handlerMap
     , R.MonadCatch m
     , V0.TicTacToe'Service meta0 m
     )
-  => (xtra -> C.Hooks m V0.Meta meta0)
+  => (xtra -> C.Hooks m V0.AccessToken meta0)
   -> xtra
   -> R.Map C.Major (C.Minor, C.Request -> m (P.Either C.Response C.Response))
 ticTacToe'handlerMap hooks0 xtra = R.fromList
@@ -67,7 +89,7 @@ ticTacToe'Scotty'Post
     , V0.TicTacToe'Service meta0 m
     )
   => C.Pull
-  -> ([(Scotty.LazyText, Scotty.LazyText)] -> C.Hooks m V0.Meta meta0)
+  -> ([(Scotty.LazyText, Scotty.LazyText)] -> C.Hooks m V0.AccessToken meta0)
   -> Scotty.ScottyT e m ()
 ticTacToe'Scotty'Post pull hooks0 = Scotty.respond pull (ticTacToe'handlerMap hooks0)
 

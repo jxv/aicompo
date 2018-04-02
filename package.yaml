@@ -18,7 +18,11 @@ library:
     - mtl
     - text
     - safe
+    - turn-loop
+    - text-conversions
+    - random
   default-extensions:
+    - LambdaCase
     - GeneralizedNewtypeDeriving
     - NamedFieldPuns
     - OverloadedStrings

@@ -19,9 +19,20 @@ module CompoAi.Api.TicTacToe.Major0
   , ticTacToe'spec
   , TicTacToe'Thrower(..)
   , TicTacToe'Service(..)
-  , Meta(..)
+  , AccessToken(..)
+  , UserId(..)
+  , Group(..)
+  , GameId(..)
+  , GameToken(..)
+  , Board(..)
+  , Loc(..)
+  , State(..)
+  , Users(..)
+  , Init(..)
+  , PostMove(..)
+  , Player(..)
   , Error(..)
-  , Hello(..)
+  , Final(..)
   , ticTacToe'Scotty'Post
   , ticTacToe'Scotty'Get
   ) where
@@ -58,27 +69,94 @@ class C.ServiceThrower m => TicTacToe'Thrower m where
 
 -- Service
 class P.Monad m => TicTacToe'Service meta m where
-  ticTacToe'Hello :: meta -> Hello -> m R.Text
+  ticTacToe'PostStart :: meta -> m Init
+  ticTacToe'PostMove :: meta -> PostMove -> m State
 
 instance TicTacToe'Service meta m => TicTacToe'Service meta (M.ExceptT C.Response m) where
-  ticTacToe'Hello _meta = M.lift P.. ticTacToe'Hello _meta
+  ticTacToe'PostStart _meta = M.lift P.$ ticTacToe'PostStart _meta
+  ticTacToe'PostMove _meta = M.lift P.. ticTacToe'PostMove _meta
 
 --------------------------------------------------------
 -- Types
 --------------------------------------------------------
 
--- Wrap: Meta
-newtype Meta = Meta ()
-  deriving (P.Eq, P.Ord, P.Show)
+-- Wrap: AccessToken
+newtype AccessToken = AccessToken R.Text
+  deriving (P.Eq, P.Ord, P.IsString, R.ToText, P.Show)
 
--- Wrap: Error
-newtype Error = Error ()
-  deriving (P.Eq, P.Ord, P.Show)
+-- Wrap: UserId
+newtype UserId = UserId R.Text
+  deriving (P.Eq, P.Ord, P.IsString, R.ToText, P.Show)
 
--- Struct: Hello
-data Hello = Hello
-  { helloTarget :: R.Text
+-- Wrap: Group
+newtype Group = Group R.Text
+  deriving (P.Eq, P.Ord, P.IsString, R.ToText, P.Show)
+
+-- Wrap: GameId
+newtype GameId = GameId R.Text
+  deriving (P.Eq, P.Ord, P.IsString, R.ToText, P.Show)
+
+-- Wrap: GameToken
+newtype GameToken = GameToken R.Text
+  deriving (P.Eq, P.Ord, P.IsString, R.ToText, P.Show)
+
+-- Struct: Board
+data Board = Board
+  { boardCells :: [[(P.Maybe Player)]]
   } deriving (P.Show, P.Eq)
+
+-- Struct: Loc
+data Loc = Loc
+  { locx :: P.Int
+  , locy :: P.Int
+  } deriving (P.Show, P.Eq)
+
+-- Struct: State
+data State = State
+  { stateBoard :: Board
+  , stateFinal :: (P.Maybe Final)
+  } deriving (P.Show, P.Eq)
+
+-- Struct: Users
+data Users = Users
+  { usersx :: UserId
+  , userso :: UserId
+  } deriving (P.Show, P.Eq)
+
+-- Struct: Init
+data Init = Init
+  { initGameId :: GameId
+  , initUsers :: Users
+  , initState :: State
+  } deriving (P.Show, P.Eq)
+
+-- Struct: PostMove
+data PostMove = PostMove
+  { postMoveLoc :: Loc
+  , postMoveGameId :: GameId
+  } deriving (P.Show, P.Eq)
+
+-- Enumeration: Player
+data Player
+  = Player'X
+  | Player'O
+  deriving (P.Show, P.Eq)
+
+-- Enumeration: Error
+data Error
+  = Error'AccessToken
+  | Error'GameId
+  | Error'GameToken
+  | Error'MoveLoc
+  | Error'Timeout
+  deriving (P.Show, P.Eq)
+
+-- Enumeration: Final
+data Final
+  = Final'Won
+  | Final'Loss
+  | Final'Tied
+  deriving (P.Show, P.Eq)
 
 --------------------------------------------------------
 -- Add-ons
@@ -86,7 +164,7 @@ data Hello = Hello
 
 ticTacToe'Scotty'Post
   :: (Scotty.ScottyError e, R.MonadIO m, TicTacToe'Service meta m, R.MonadCatch m)
-  => ([(Scotty.LazyText, Scotty.LazyText)] -> C.Hooks m Meta meta)
+  => ([(Scotty.LazyText, Scotty.LazyText)] -> C.Hooks m AccessToken meta)
   -> C.Pull
   -> Scotty.ScottyT e m ()
 ticTacToe'Scotty'Post _hooks _pull = Scotty.respondSingleton _pull ticTacToe'version (\_xtra -> ticTacToe'handler _hooks _xtra)
@@ -101,7 +179,7 @@ ticTacToe'Scotty'Get = Scotty.getSpec P.$ R.toJSON [ticTacToe'spec]
 -- Handler
 ticTacToe'handler
   :: (TicTacToe'Service meta m, R.MonadIO m, R.MonadCatch m)
-  => (xtra -> C.Hooks m Meta meta)
+  => (xtra -> C.Hooks m AccessToken meta)
   -> xtra
   -> C.Request
   -> m (P.Either C.Response C.Response)
@@ -136,14 +214,17 @@ ticTacToe'ApiCall :: (TicTacToe'Service meta m, C.ServiceThrower m, C.RuntimeThr
 ticTacToe'ApiCall meta' apiCall' = case C.parseApiCall ticTacToe'ApiParser apiCall' of
   P.Nothing -> C.runtimeThrow (C.RuntimeError'UnrecognizedCall P.$ C.apiCallName apiCall')
   P.Just x' -> case x' of
-    TicTacToe'Api'Hello a' -> C.toVal P.<$> ticTacToe'Hello meta' a'
+    TicTacToe'Api'PostStart -> C.toVal P.<$> ticTacToe'PostStart meta'
+    TicTacToe'Api'PostMove a' -> C.toVal P.<$> ticTacToe'PostMove meta' a'
 
 -- API Parser
 ticTacToe'ApiParser :: C.ApiParser TicTacToe'Api
 ticTacToe'ApiParser = C.ApiParser
-  { C.hollow = R.empty
+  { C.hollow = R.fromList
+     [ ("PostStart", TicTacToe'Api'PostStart)
+     ]
   , C.struct = R.fromList
-     [ ("Hello", v TicTacToe'Api'Hello)
+     [ ("PostMove", v TicTacToe'Api'PostMove)
      ]
   , C.enumeration = R.empty
   , C.wrap = R.empty
@@ -153,23 +234,267 @@ ticTacToe'ApiParser = C.ApiParser
 
 -- Api
 data TicTacToe'Api
-  = TicTacToe'Api'Hello Hello
+  = TicTacToe'Api'PostStart
+  | TicTacToe'Api'PostMove PostMove
   deriving (P.Show, P.Eq)
 
 --------------------------------------------------------
 -- Type Instances
 --------------------------------------------------------
 
-instance C.ToVal Meta where
-  toVal (Meta _w) = C.toVal _w
+instance C.ToVal AccessToken where
+  toVal (AccessToken _w) = C.toVal _w
 
-instance C.FromVal Meta where
-  fromVal _v = Meta P.<$> C.fromVal _v
+instance C.FromVal AccessToken where
+  fromVal _v = AccessToken P.<$> C.fromVal _v
 
-instance R.ToJSON Meta where
+instance R.ToJSON AccessToken where
   toJSON = R.toJSON P.. C.toVal
 
-instance R.FromJSON Meta where
+instance R.FromJSON AccessToken where
+  parseJSON _v = do
+    _x <- R.parseJSON _v
+    case C.fromVal _x of
+      P.Nothing -> P.mzero
+      P.Just _y -> P.return _y
+
+instance C.ToVal UserId where
+  toVal (UserId _w) = C.toVal _w
+
+instance C.FromVal UserId where
+  fromVal _v = UserId P.<$> C.fromVal _v
+
+instance R.ToJSON UserId where
+  toJSON = R.toJSON P.. C.toVal
+
+instance R.FromJSON UserId where
+  parseJSON _v = do
+    _x <- R.parseJSON _v
+    case C.fromVal _x of
+      P.Nothing -> P.mzero
+      P.Just _y -> P.return _y
+
+instance C.ToVal Group where
+  toVal (Group _w) = C.toVal _w
+
+instance C.FromVal Group where
+  fromVal _v = Group P.<$> C.fromVal _v
+
+instance R.ToJSON Group where
+  toJSON = R.toJSON P.. C.toVal
+
+instance R.FromJSON Group where
+  parseJSON _v = do
+    _x <- R.parseJSON _v
+    case C.fromVal _x of
+      P.Nothing -> P.mzero
+      P.Just _y -> P.return _y
+
+instance C.ToVal GameId where
+  toVal (GameId _w) = C.toVal _w
+
+instance C.FromVal GameId where
+  fromVal _v = GameId P.<$> C.fromVal _v
+
+instance R.ToJSON GameId where
+  toJSON = R.toJSON P.. C.toVal
+
+instance R.FromJSON GameId where
+  parseJSON _v = do
+    _x <- R.parseJSON _v
+    case C.fromVal _x of
+      P.Nothing -> P.mzero
+      P.Just _y -> P.return _y
+
+instance C.ToVal GameToken where
+  toVal (GameToken _w) = C.toVal _w
+
+instance C.FromVal GameToken where
+  fromVal _v = GameToken P.<$> C.fromVal _v
+
+instance R.ToJSON GameToken where
+  toJSON = R.toJSON P.. C.toVal
+
+instance R.FromJSON GameToken where
+  parseJSON _v = do
+    _x <- R.parseJSON _v
+    case C.fromVal _x of
+      P.Nothing -> P.mzero
+      P.Just _y -> P.return _y
+
+instance C.ToVal Board where
+  toVal Board
+    { boardCells
+    } = C.Val'ApiVal P.$ C.ApiVal'Struct P.$ C.Struct P.$ R.fromList
+    [ ("cells", C.toVal boardCells)
+    ]
+
+instance C.FromVal Board where
+  fromVal = \case
+    C.Val'ApiVal (C.ApiVal'Struct (C.Struct _m)) -> Board
+      P.<$> C.getMember _m "cells"
+    _ -> P.Nothing
+
+instance R.ToJSON Board where
+  toJSON = R.toJSON P.. C.toVal
+
+instance R.FromJSON Board where
+  parseJSON _v = do
+    _x <- R.parseJSON _v
+    case C.fromVal _x of
+      P.Nothing -> P.mzero
+      P.Just _y -> P.return _y
+
+instance C.ToVal Loc where
+  toVal Loc
+    { locx
+    , locy
+    } = C.Val'ApiVal P.$ C.ApiVal'Struct P.$ C.Struct P.$ R.fromList
+    [ ("x", C.toVal locx)
+    , ("y", C.toVal locy)
+    ]
+
+instance C.FromVal Loc where
+  fromVal = \case
+    C.Val'ApiVal (C.ApiVal'Struct (C.Struct _m)) -> Loc
+      P.<$> C.getMember _m "x"
+      P.<*> C.getMember _m "y"
+    _ -> P.Nothing
+
+instance R.ToJSON Loc where
+  toJSON = R.toJSON P.. C.toVal
+
+instance R.FromJSON Loc where
+  parseJSON _v = do
+    _x <- R.parseJSON _v
+    case C.fromVal _x of
+      P.Nothing -> P.mzero
+      P.Just _y -> P.return _y
+
+instance C.ToVal State where
+  toVal State
+    { stateBoard
+    , stateFinal
+    } = C.Val'ApiVal P.$ C.ApiVal'Struct P.$ C.Struct P.$ R.fromList
+    [ ("board", C.toVal stateBoard)
+    , ("final", C.toVal stateFinal)
+    ]
+
+instance C.FromVal State where
+  fromVal = \case
+    C.Val'ApiVal (C.ApiVal'Struct (C.Struct _m)) -> State
+      P.<$> C.getMember _m "board"
+      P.<*> C.getMember _m "final"
+    _ -> P.Nothing
+
+instance R.ToJSON State where
+  toJSON = R.toJSON P.. C.toVal
+
+instance R.FromJSON State where
+  parseJSON _v = do
+    _x <- R.parseJSON _v
+    case C.fromVal _x of
+      P.Nothing -> P.mzero
+      P.Just _y -> P.return _y
+
+instance C.ToVal Users where
+  toVal Users
+    { usersx
+    , userso
+    } = C.Val'ApiVal P.$ C.ApiVal'Struct P.$ C.Struct P.$ R.fromList
+    [ ("x", C.toVal usersx)
+    , ("o", C.toVal userso)
+    ]
+
+instance C.FromVal Users where
+  fromVal = \case
+    C.Val'ApiVal (C.ApiVal'Struct (C.Struct _m)) -> Users
+      P.<$> C.getMember _m "x"
+      P.<*> C.getMember _m "o"
+    _ -> P.Nothing
+
+instance R.ToJSON Users where
+  toJSON = R.toJSON P.. C.toVal
+
+instance R.FromJSON Users where
+  parseJSON _v = do
+    _x <- R.parseJSON _v
+    case C.fromVal _x of
+      P.Nothing -> P.mzero
+      P.Just _y -> P.return _y
+
+instance C.ToVal Init where
+  toVal Init
+    { initGameId
+    , initUsers
+    , initState
+    } = C.Val'ApiVal P.$ C.ApiVal'Struct P.$ C.Struct P.$ R.fromList
+    [ ("gameId", C.toVal initGameId)
+    , ("users", C.toVal initUsers)
+    , ("state", C.toVal initState)
+    ]
+
+instance C.FromVal Init where
+  fromVal = \case
+    C.Val'ApiVal (C.ApiVal'Struct (C.Struct _m)) -> Init
+      P.<$> C.getMember _m "gameId"
+      P.<*> C.getMember _m "users"
+      P.<*> C.getMember _m "state"
+    _ -> P.Nothing
+
+instance R.ToJSON Init where
+  toJSON = R.toJSON P.. C.toVal
+
+instance R.FromJSON Init where
+  parseJSON _v = do
+    _x <- R.parseJSON _v
+    case C.fromVal _x of
+      P.Nothing -> P.mzero
+      P.Just _y -> P.return _y
+
+instance C.ToVal PostMove where
+  toVal PostMove
+    { postMoveLoc
+    , postMoveGameId
+    } = C.Val'ApiVal P.$ C.ApiVal'Struct P.$ C.Struct P.$ R.fromList
+    [ ("loc", C.toVal postMoveLoc)
+    , ("gameId", C.toVal postMoveGameId)
+    ]
+
+instance C.FromVal PostMove where
+  fromVal = \case
+    C.Val'ApiVal (C.ApiVal'Struct (C.Struct _m)) -> PostMove
+      P.<$> C.getMember _m "loc"
+      P.<*> C.getMember _m "gameId"
+    _ -> P.Nothing
+
+instance R.ToJSON PostMove where
+  toJSON = R.toJSON P.. C.toVal
+
+instance R.FromJSON PostMove where
+  parseJSON _v = do
+    _x <- R.parseJSON _v
+    case C.fromVal _x of
+      P.Nothing -> P.mzero
+      P.Just _y -> P.return _y
+
+instance C.ToVal Player where
+  toVal = \case
+    Player'X -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "X" P.Nothing
+    Player'O -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "O" P.Nothing
+
+instance C.FromVal Player where
+  fromVal = \case
+    C.Val'ApiVal (C.ApiVal'Enumeral (C.Enumeral _tag _m)) -> case (_tag,_m) of
+      ("X", P.Nothing) -> P.Just Player'X
+      ("O", P.Nothing) -> P.Just Player'O
+      _ -> P.Nothing
+    _ -> P.Nothing
+
+instance R.ToJSON Player where
+  toJSON = R.toJSON P.. C.toVal
+
+instance R.FromJSON Player where
   parseJSON _v = do
     _x <- R.parseJSON _v
     case C.fromVal _x of
@@ -177,10 +502,23 @@ instance R.FromJSON Meta where
       P.Just _y -> P.return _y
 
 instance C.ToVal Error where
-  toVal (Error _w) = C.toVal _w
+  toVal = \case
+    Error'AccessToken -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "AccessToken" P.Nothing
+    Error'GameId -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "GameId" P.Nothing
+    Error'GameToken -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "GameToken" P.Nothing
+    Error'MoveLoc -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "MoveLoc" P.Nothing
+    Error'Timeout -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "Timeout" P.Nothing
 
 instance C.FromVal Error where
-  fromVal _v = Error P.<$> C.fromVal _v
+  fromVal = \case
+    C.Val'ApiVal (C.ApiVal'Enumeral (C.Enumeral _tag _m)) -> case (_tag,_m) of
+      ("AccessToken", P.Nothing) -> P.Just Error'AccessToken
+      ("GameId", P.Nothing) -> P.Just Error'GameId
+      ("GameToken", P.Nothing) -> P.Just Error'GameToken
+      ("MoveLoc", P.Nothing) -> P.Just Error'MoveLoc
+      ("Timeout", P.Nothing) -> P.Just Error'Timeout
+      _ -> P.Nothing
+    _ -> P.Nothing
 
 instance R.ToJSON Error where
   toJSON = R.toJSON P.. C.toVal
@@ -192,23 +530,25 @@ instance R.FromJSON Error where
       P.Nothing -> P.mzero
       P.Just _y -> P.return _y
 
-instance C.ToVal Hello where
-  toVal Hello
-    { helloTarget
-    } = C.Val'ApiVal P.$ C.ApiVal'Struct P.$ C.Struct P.$ R.fromList
-    [ ("target", C.toVal helloTarget)
-    ]
+instance C.ToVal Final where
+  toVal = \case
+    Final'Won -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "Won" P.Nothing
+    Final'Loss -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "Loss" P.Nothing
+    Final'Tied -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "Tied" P.Nothing
 
-instance C.FromVal Hello where
+instance C.FromVal Final where
   fromVal = \case
-    C.Val'ApiVal (C.ApiVal'Struct (C.Struct _m)) -> Hello
-      P.<$> C.getMember _m "target"
+    C.Val'ApiVal (C.ApiVal'Enumeral (C.Enumeral _tag _m)) -> case (_tag,_m) of
+      ("Won", P.Nothing) -> P.Just Final'Won
+      ("Loss", P.Nothing) -> P.Just Final'Loss
+      ("Tied", P.Nothing) -> P.Just Final'Tied
+      _ -> P.Nothing
     _ -> P.Nothing
 
-instance R.ToJSON Hello where
+instance R.ToJSON Final where
   toJSON = R.toJSON P.. C.toVal
 
-instance R.FromJSON Hello where
+instance R.FromJSON Final where
   parseJSON _v = do
     _x <- R.parseJSON _v
     case C.fromVal _x of
@@ -221,4 +561,4 @@ instance R.FromJSON Hello where
 
 ticTacToe'spec :: R.Value
 ticTacToe'spec = v
-  where P.Just v = R.decode "{\"fluid\":{\"major\":0,\"minor\":0},\"pull\":{\"protocol\":\"http\",\"name\":\"TicTacToe\",\"host\":\"compo-ai.herokuapp.com\",\"path\":\"/api/tictactoe\",\"meta\":\"Meta\",\"port\":80,\"error\":\"Error\"},\"schema\":{\"Meta\":\"Unit\",\"Error\":\"Unit\",\"Hello\":{\"m\":[{\"target\":\"String\"}],\"o\":\"String\"}},\"version\":{\"major\":0,\"minor\":0}}"
+  where P.Just v = R.decode "{\"fluid\":{\"major\":0,\"minor\":0},\"pull\":{\"protocol\":\"http\",\"name\":\"TicTacToe\",\"host\":\"compo-ai.herokuapp.com\",\"port\":80,\"path\":\"/api/tictactoe\",\"meta\":\"AccessToken\",\"error\":\"Error\"},\"schema\":{\"AccessToken\":\"String\",\"UserId\":\"String\",\"Group\":\"String\",\"GameId\":\"String\",\"GameToken\":\"String\",\"Player\":[\"X\",\"O\"],\"Error\":[\"AccessToken\",\"GameId\",\"GameToken\",\"MoveLoc\",\"Timeout\"],\"Board\":{\"m\":[{\"cells\":{\"n\":\"List\",\"p\":{\"n\":\"List\",\"p\":{\"n\":\"Option\",\"p\":\"Player\"}}}}]},\"Final\":[\"Won\",\"Loss\",\"Tied\"],\"Loc\":{\"m\":[{\"x\":\"Int\"},{\"y\":\"Int\"}]},\"State\":{\"m\":[{\"board\":\"Board\"},{\"final\":{\"n\":\"Option\",\"p\":\"Final\"}}]},\"Users\":{\"m\":[{\"x\":\"UserId\"},{\"o\":\"UserId\"}]},\"Init\":{\"m\":[{\"gameId\":\"GameId\"},{\"users\":\"Users\"},{\"state\":\"State\"}]},\"PostStart\":{\"o\":\"Init\"},\"PostMove\":{\"m\":[{\"loc\":\"Loc\"},{\"gameId\":\"GameId\"}],\"o\":\"State\"}},\"version\":{\"major\":0,\"minor\":0}}"
