@@ -21,6 +21,7 @@ library:
     - turn-loop
     - text-conversions
     - random
+    - containers
   default-extensions:
     - LambdaCase
     - GeneralizedNewtypeDeriving

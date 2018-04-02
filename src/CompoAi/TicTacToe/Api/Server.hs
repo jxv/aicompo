@@ -12,7 +12,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 -- Module
-module CompoAi.Api.TicTacToe.Server
+module CompoAi.TicTacToe.Api.Server
   ( ticTacToe'handlerMap
   , ticTacToe'spec
   , ticTacToe'Scotty'Post
@@ -40,7 +40,7 @@ import qualified Prelude as P
 import qualified Fluid.Server as C (RuntimeThrower, Hooks, Request, Response, Major, Minor, Pull)
 import qualified Fluid.Imports as R
 import qualified Fluid.Server.Scotty as Scotty
-import qualified CompoAi.Api.TicTacToe.Major0 as V0
+import qualified CompoAi.TicTacToe.Api.Major0 as V0
   ( TicTacToe'Service(..)
   , TicTacToe'Thrower(..)
   , ticTacToe'handler

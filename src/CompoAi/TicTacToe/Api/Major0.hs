@@ -12,7 +12,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 -- Module
-module CompoAi.Api.TicTacToe.Major0
+module CompoAi.TicTacToe.Api.Major0
   ( ticTacToe'version
   , ticTacToe'pull
   , ticTacToe'handler
@@ -146,7 +146,7 @@ data Player
 data Error
   = Error'AccessToken
   | Error'GameId
-  | Error'GameToken
+  | Error'Unauthorized
   | Error'MoveLoc
   | Error'Timeout
   deriving (P.Show, P.Eq)
@@ -505,7 +505,7 @@ instance C.ToVal Error where
   toVal = \case
     Error'AccessToken -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "AccessToken" P.Nothing
     Error'GameId -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "GameId" P.Nothing
-    Error'GameToken -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "GameToken" P.Nothing
+    Error'Unauthorized -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "Unauthorized" P.Nothing
     Error'MoveLoc -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "MoveLoc" P.Nothing
     Error'Timeout -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "Timeout" P.Nothing
 
@@ -514,7 +514,7 @@ instance C.FromVal Error where
     C.Val'ApiVal (C.ApiVal'Enumeral (C.Enumeral _tag _m)) -> case (_tag,_m) of
       ("AccessToken", P.Nothing) -> P.Just Error'AccessToken
       ("GameId", P.Nothing) -> P.Just Error'GameId
-      ("GameToken", P.Nothing) -> P.Just Error'GameToken
+      ("Unauthorized", P.Nothing) -> P.Just Error'Unauthorized
       ("MoveLoc", P.Nothing) -> P.Just Error'MoveLoc
       ("Timeout", P.Nothing) -> P.Just Error'Timeout
       _ -> P.Nothing
@@ -561,4 +561,4 @@ instance R.FromJSON Final where
 
 ticTacToe'spec :: R.Value
 ticTacToe'spec = v
-  where P.Just v = R.decode "{\"fluid\":{\"major\":0,\"minor\":0},\"pull\":{\"protocol\":\"http\",\"name\":\"TicTacToe\",\"host\":\"compo-ai.herokuapp.com\",\"port\":80,\"path\":\"/api/tictactoe\",\"meta\":\"AccessToken\",\"error\":\"Error\"},\"schema\":{\"AccessToken\":\"String\",\"UserId\":\"String\",\"Group\":\"String\",\"GameId\":\"String\",\"GameToken\":\"String\",\"Player\":[\"X\",\"O\"],\"Error\":[\"AccessToken\",\"GameId\",\"GameToken\",\"MoveLoc\",\"Timeout\"],\"Board\":{\"m\":[{\"cells\":{\"n\":\"List\",\"p\":{\"n\":\"List\",\"p\":{\"n\":\"Option\",\"p\":\"Player\"}}}}]},\"Final\":[\"Won\",\"Loss\",\"Tied\"],\"Loc\":{\"m\":[{\"x\":\"Int\"},{\"y\":\"Int\"}]},\"State\":{\"m\":[{\"board\":\"Board\"},{\"final\":{\"n\":\"Option\",\"p\":\"Final\"}}]},\"Users\":{\"m\":[{\"x\":\"UserId\"},{\"o\":\"UserId\"}]},\"Init\":{\"m\":[{\"gameId\":\"GameId\"},{\"users\":\"Users\"},{\"state\":\"State\"}]},\"PostStart\":{\"o\":\"Init\"},\"PostMove\":{\"m\":[{\"loc\":\"Loc\"},{\"gameId\":\"GameId\"}],\"o\":\"State\"}},\"version\":{\"major\":0,\"minor\":0}}"
+  where P.Just v = R.decode "{\"fluid\":{\"major\":0,\"minor\":0},\"pull\":{\"protocol\":\"http\",\"name\":\"TicTacToe\",\"host\":\"compo-ai.herokuapp.com\",\"port\":80,\"path\":\"/api/tictactoe\",\"meta\":\"AccessToken\",\"error\":\"Error\"},\"schema\":{\"AccessToken\":\"String\",\"UserId\":\"String\",\"Group\":\"String\",\"GameId\":\"String\",\"GameToken\":\"String\",\"Player\":[\"X\",\"O\"],\"Error\":[\"AccessToken\",\"GameId\",\"Unauthorized\",\"MoveLoc\",\"Timeout\"],\"Board\":{\"m\":[{\"cells\":{\"n\":\"List\",\"p\":{\"n\":\"List\",\"p\":{\"n\":\"Option\",\"p\":\"Player\"}}}}]},\"Final\":[\"Won\",\"Loss\",\"Tied\"],\"Loc\":{\"m\":[{\"x\":\"Int\"},{\"y\":\"Int\"}]},\"State\":{\"m\":[{\"board\":\"Board\"},{\"final\":{\"n\":\"Option\",\"p\":\"Final\"}}]},\"Users\":{\"m\":[{\"x\":\"UserId\"},{\"o\":\"UserId\"}]},\"Init\":{\"m\":[{\"gameId\":\"GameId\"},{\"users\":\"Users\"},{\"state\":\"State\"}]},\"PostStart\":{\"o\":\"Init\"},\"PostMove\":{\"m\":[{\"loc\":\"Loc\"},{\"gameId\":\"GameId\"}],\"o\":\"State\"}},\"version\":{\"major\":0,\"minor\":0}}"

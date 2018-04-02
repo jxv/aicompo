@@ -18,7 +18,7 @@ schema:
   GameId: String
   GameToken: String
   Player: [X, O]
-  Error: [AccessToken, GameId, GameToken, MoveLoc, Timeout]
+  Error: [AccessToken, GameId, Unauthorized, MoveLoc, Timeout]
 
   Board:
     m: [cells: {n: List, p: {n: List, p: {n: Option, p: Player}}}]
