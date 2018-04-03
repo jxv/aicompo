@@ -1,4 +1,4 @@
-module CompoAi where
+module AiCompo where
 
 import Control.Monad.IO.Class
 import Control.Monad.Reader
@@ -10,9 +10,9 @@ import System.Environment
 import Safe (readMay)
 import Data.Maybe (fromMaybe)
 
-import qualified CompoAi.TicTacToe.Api.Server as T
-import qualified CompoAi.TicTacToe.Api.Major0 as T0
-import qualified CompoAi.TicTacToe.Service as TS
+import qualified AiCompo.TicTacToe.Api.Server as T
+import qualified AiCompo.TicTacToe.Api.Major0 as T0
+import qualified AiCompo.TicTacToe.Service as TS
 
 data Config = Config
   { _cTicTacToe :: TS.TObjects

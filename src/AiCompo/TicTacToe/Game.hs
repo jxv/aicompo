@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveFunctor #-}
-module CompoAi.TicTacToe.Game where
+module AiCompo.TicTacToe.Game where
 
 import qualified Data.Map as Map
 import Data.Map (Map)

@@ -15,7 +15,7 @@ gen_api() {
       yaml2json < $yaml > "api-json/$1/$json.json"
   done
 
-  fluid -l haskell -s api-json/$1 -m CompoAi.$2.Api -n Api -d ./src/CompoAi/$2 -e server -a scotty
+  fluid -l haskell -s api-json/$1 -m AiCompo.$2.Api -n Api -d ./src/AiCompo/$2 -e server -a scotty
 }
 
 gen_api "tictactoe" "TicTacToe"

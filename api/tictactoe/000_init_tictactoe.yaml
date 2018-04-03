@@ -3,9 +3,9 @@ fluid:
   minor: 0
 
 pull:
-  protocol: http
+  protocol: https
   name: TicTacToe
-  host: compo-ai.herokuapp.com
+  host: aicompo.net
   port: 80
   path: /api/tictactoe
   meta: AccessToken

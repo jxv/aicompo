@@ -1,6 +1,6 @@
 module Main where
 
-import qualified CompoAi
+import qualified AiCompo
 
 main :: IO ()
-main = CompoAi.main
+main = AiCompo.main

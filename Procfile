@@ -1,1 +1,1 @@
-web: /app/.local/bin/compo-ai
+web: /app/.local/bin/aicompo

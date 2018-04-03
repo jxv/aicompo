@@ -1,8 +1,8 @@
-name: compo-ai
+name: aicompo
 version: "0.0.0"
 maintainer: Joe Vargas
-synopsis: Compo AI
-description: Compo AI
+synopsis: AI Compo
+description: AI Compo
 stability: experimental
 license: MIT
 extra-source-files:
@@ -22,6 +22,8 @@ library:
     - text-conversions
     - random
     - containers
+    - lens
+    - protolude
   default-extensions:
     - LambdaCase
     - GeneralizedNewtypeDeriving
@@ -31,10 +33,10 @@ library:
     - MultiParamTypeClasses
   source-dirs: src
 executables:
-  compo-ai:
+  aicompo:
     dependencies:
       - base
-      - compo-ai
+      - aicompo
     ghc-options:
       - -rtsopts
       - -threaded

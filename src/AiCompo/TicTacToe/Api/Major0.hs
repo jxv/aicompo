@@ -12,7 +12,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 -- Module
-module CompoAi.TicTacToe.Api.Major0
+module AiCompo.TicTacToe.Api.Major0
   ( ticTacToe'version
   , ticTacToe'pull
   , ticTacToe'handler
@@ -56,7 +56,7 @@ ticTacToe'version :: C.Version
 ticTacToe'version = C.Version 0 0
 
 ticTacToe'pull :: C.Pull
-ticTacToe'pull = C.Pull "http" "compo-ai.herokuapp.com" "/api/tictactoe" 80
+ticTacToe'pull = C.Pull "https" "aicompo.net" "/api/tictactoe" 80
 
 --------------------------------------------------------
 -- Interfaces
@@ -561,4 +561,4 @@ instance R.FromJSON Final where
 
 ticTacToe'spec :: R.Value
 ticTacToe'spec = v
-  where P.Just v = R.decode "{\"fluid\":{\"major\":0,\"minor\":0},\"pull\":{\"protocol\":\"http\",\"name\":\"TicTacToe\",\"host\":\"compo-ai.herokuapp.com\",\"port\":80,\"path\":\"/api/tictactoe\",\"meta\":\"AccessToken\",\"error\":\"Error\"},\"schema\":{\"AccessToken\":\"String\",\"UserId\":\"String\",\"Group\":\"String\",\"GameId\":\"String\",\"GameToken\":\"String\",\"Player\":[\"X\",\"O\"],\"Error\":[\"AccessToken\",\"GameId\",\"Unauthorized\",\"MoveLoc\",\"Timeout\"],\"Board\":{\"m\":[{\"cells\":{\"n\":\"List\",\"p\":{\"n\":\"List\",\"p\":{\"n\":\"Option\",\"p\":\"Player\"}}}}]},\"Final\":[\"Won\",\"Loss\",\"Tied\"],\"Loc\":{\"m\":[{\"x\":\"Int\"},{\"y\":\"Int\"}]},\"State\":{\"m\":[{\"board\":\"Board\"},{\"final\":{\"n\":\"Option\",\"p\":\"Final\"}}]},\"Users\":{\"m\":[{\"x\":\"UserId\"},{\"o\":\"UserId\"}]},\"Init\":{\"m\":[{\"gameId\":\"GameId\"},{\"users\":\"Users\"},{\"state\":\"State\"}]},\"PostStart\":{\"o\":\"Init\"},\"PostMove\":{\"m\":[{\"loc\":\"Loc\"},{\"gameId\":\"GameId\"}],\"o\":\"State\"}},\"version\":{\"major\":0,\"minor\":0}}"
+  where P.Just v = R.decode "{\"fluid\":{\"major\":0,\"minor\":0},\"pull\":{\"protocol\":\"https\",\"name\":\"TicTacToe\",\"host\":\"aicompo.net\",\"port\":80,\"path\":\"/api/tictactoe\",\"meta\":\"AccessToken\",\"error\":\"Error\"},\"schema\":{\"AccessToken\":\"String\",\"UserId\":\"String\",\"Group\":\"String\",\"GameId\":\"String\",\"GameToken\":\"String\",\"Player\":[\"X\",\"O\"],\"Error\":[\"AccessToken\",\"GameId\",\"Unauthorized\",\"MoveLoc\",\"Timeout\"],\"Board\":{\"m\":[{\"cells\":{\"n\":\"List\",\"p\":{\"n\":\"List\",\"p\":{\"n\":\"Option\",\"p\":\"Player\"}}}}]},\"Final\":[\"Won\",\"Loss\",\"Tied\"],\"Loc\":{\"m\":[{\"x\":\"Int\"},{\"y\":\"Int\"}]},\"State\":{\"m\":[{\"board\":\"Board\"},{\"final\":{\"n\":\"Option\",\"p\":\"Final\"}}]},\"Users\":{\"m\":[{\"x\":\"UserId\"},{\"o\":\"UserId\"}]},\"Init\":{\"m\":[{\"gameId\":\"GameId\"},{\"users\":\"Users\"},{\"state\":\"State\"}]},\"PostStart\":{\"o\":\"Init\"},\"PostMove\":{\"m\":[{\"loc\":\"Loc\"},{\"gameId\":\"GameId\"}],\"o\":\"State\"}},\"version\":{\"major\":0,\"minor\":0}}"
