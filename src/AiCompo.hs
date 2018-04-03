@@ -15,7 +15,7 @@ import qualified AiCompo.TicTacToe.Api.Major0 as T0
 import qualified AiCompo.TicTacToe.Service as TS
 
 data Config = Config
-  { _cTicTacToe :: TS.TObjects
+  { _cTicTacToeComponents :: TS.Components
   }
 
 newtype App a = App { unApp :: ReaderT Config IO a }
@@ -28,17 +28,17 @@ instance ServiceThrower App
 instance T0.TicTacToe'Thrower App
 
 instance T0.TicTacToe'Service TS.UserId App where
-  ticTacToe'PostStart meta = asks _cTicTacToe >>= (\t -> TS.postStart t meta)
-  ticTacToe'PostMove meta req = asks _cTicTacToe >>= (\t -> TS.postMove t meta req)
+  ticTacToe'PostStart meta = asks _cTicTacToeComponents >>= (\t -> TS.postStart t meta)
+  ticTacToe'PostMove meta req = asks _cTicTacToeComponents >>= (\t -> TS.postMove t meta req)
 
 --
 
 main :: IO ()
 main = do
   port' <- lookupEnv "PORT"
-  ticTacToe <- TS.newTObjects
-  let config = Config ticTacToe
-  _ <- TS.forkDispatcher ticTacToe
+  ticTacToeComponents <- TS.newComponents
+  let config = Config ticTacToeComponents
+  _ <- TS.forkDispatcher ticTacToeComponents
   runServer
     T.ticTacToe'pull { port = fromMaybe (port T.ticTacToe'pull) (readMay =<< port') }
     (runApp config)

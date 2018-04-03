@@ -53,25 +53,25 @@ data TUser = TUser
 
 --
 
-type TStep = TL.Step G.State G.Terminal
-type TResult = TL.Result GameId G.Player UserId G.State ()
-type TStarter = TL.Starter GameId G.Player UserId
-type TLobby = TL.Lobby GameId G.Player UserId IO
-type TSessions = TL.Sessions GameId UserId G.Player G.Input G.State G.Terminal IO
-type TSessionEntry = TL.SessionEntry G.Player G.Input G.State G.Terminal IO
-type TRegistry = TL.Registry UserId TUser IO
-type TResults = TL.Results GameId G.Player UserId G.State () IO
-type TLabeledSession = TL.LabeledSession UserId G.Input G.State G.Terminal
+type Step = TL.Step G.State G.Terminal
+type Result = TL.Result GameId G.Player UserId G.State ()
+type Starter = TL.Starter GameId G.Player UserId
+type Lobby = TL.Lobby GameId G.Player UserId IO
+type Sessions = TL.Sessions GameId UserId G.Player G.Input G.State G.Terminal IO
+type SessionEntry = TL.SessionEntry G.Player G.Input G.State G.Terminal IO
+type Registry = TL.Registry UserId TUser IO
+type Results = TL.Results GameId G.Player UserId G.State () IO
+type LabeledSession = TL.LabeledSession UserId G.Input G.State G.Terminal
 
-data TObjects = TObjects
-  { tLobby :: TLobby
-  , tSessions :: TSessions
-  , tRegistry :: TRegistry
-  , tResults :: TResults
+data Components = Components
+  { cLobby :: Lobby
+  , cSessions :: Sessions
+  , cRegistry :: Registry
+  , cResults :: Results
   }
 
-newTObjects :: IO TObjects
-newTObjects = TObjects
+newComponents :: IO Components
+newComponents = Components
   <$> TL.newLobbyFIFOWithSTM
   <*> TL.newSessionsWithSTM
   <*> (TL.newRegistryWithSTM (UserId <$> generateText64 32))
@@ -79,10 +79,10 @@ newTObjects = TObjects
 
 --
 
-postStart :: (MonadIO m, T0.TicTacToe'Thrower m) => TObjects -> UserId -> m T0.Init
-postStart ticTacToe userId = do
-  let lobby = tLobby ticTacToe
-  let sessions = tSessions ticTacToe
+postStart :: (MonadIO m, T0.TicTacToe'Thrower m) => Components -> UserId -> m T0.Init
+postStart components userId = do
+  let lobby = cLobby components
+  let sessions = cSessions components
   starter' <- liftIO $ TL.lTransferUser lobby userId
   case starter' of
     Nothing -> T0.ticTacToe'throw T0.Error'Timeout
@@ -101,10 +101,10 @@ postStart ticTacToe userId = do
 
       return $ T0.Init gameId users (T0.State (T0.Board board) terminal)
 
-postMove :: (MonadIO m, T0.TicTacToe'Thrower m) => TObjects -> UserId -> T0.PostMove -> m T0.State
-postMove ticTacToe userId (T0.PostMove _loc gameId) = do
+postMove :: (MonadIO m, T0.TicTacToe'Thrower m) => Components -> UserId -> T0.PostMove -> m T0.State
+postMove components userId (T0.PostMove _loc gameId) = do
   let sessionId = GameId (toText gameId)
-  let sessions = tSessions ticTacToe
+  let sessions = cSessions components
   sessionRecord' <- liftIO $ TL.sFindSession sessions sessionId
   case sessionRecord' of
     Nothing -> T0.ticTacToe'throw T0.Error'GameId
@@ -127,7 +127,7 @@ unrep players sessionToUserId rep userId = List.foldl' (<|>) Nothing $ map
 emptyBoard :: [[Maybe T.Player]]
 emptyBoard = [[Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing]]
 
-getStep :: (MonadIO m, T0.TicTacToe'Thrower m) => TSessions -> GameId -> UserId -> m TStep
+getStep :: (MonadIO m, T0.TicTacToe'Thrower m) => Sessions -> GameId -> UserId -> m Step
 getStep sessions gameId userId = do
   sessionRecord' <- liftIO $ TL.sFindSession sessions gameId
   case sessionRecord' of
@@ -141,13 +141,10 @@ getStep sessions gameId userId = do
         Nothing -> T0.ticTacToe'throw T0.Error'Unauthorized -- Can't find by user id
         Just session -> liftIO $ readChan $ TL.sStep session
 
-forkDispatcher :: TObjects -> IO ThreadId
-forkDispatcher ticTacToe = forkIO $ dispatcher
-  (sessionWorker (tSessions ticTacToe) (tResults ticTacToe))
-  (tLobby ticTacToe)
-  (tSessions ticTacToe)
+forkDispatcher :: Components -> IO ThreadId
+forkDispatcher Components{cSessions,cResults,cLobby} = forkIO $ dispatcher (sessionWorker cSessions cResults) cLobby cSessions
 
-dispatcher :: (TStarter -> IO TSessionEntry) -> TLobby -> TSessions -> IO ()
+dispatcher :: (Starter -> IO SessionEntry) -> Lobby -> Sessions -> IO ()
 dispatcher dispatchSession lobby sessions = forever $ do
   gameId <- generateGameId
   userIdX <- popUser gameId
@@ -165,7 +162,7 @@ dispatcher dispatchSession lobby sessions = forever $ do
         Nothing -> popUser gameId
         Just userId -> return userId
 
-sessionWorker :: TSessions -> TResults -> TStarter -> IO TSessionEntry
+sessionWorker :: Sessions -> Results -> Starter -> IO SessionEntry
 sessionWorker _sessions _results TL.Starter{} = do
   sessionX <- TL.newSessionWithChan
   sessionO <- TL.newSessionWithChan

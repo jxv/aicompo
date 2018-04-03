@@ -33,8 +33,13 @@ data Result
   deriving (Show, Eq)
 
 data Input = Input
+  deriving (Show, Eq)
+
 data State = State
+  deriving (Show, Eq)
+
 data Terminal = Terminal
+  deriving (Show, Eq)
 
 newtype Win a = Win a
   deriving (Eq, Show, Functor)
