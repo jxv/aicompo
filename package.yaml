@@ -4,72 +4,130 @@ maintainer: Joe Vargas
 synopsis: AI Compo
 description: AI Compo
 stability: experimental
-license: MIT
-extra-source-files:
-- package.yaml
-- stack.yaml
-- README.md
-ghc-options: -Wall
-library:
-  dependencies:
-    - base >= 4.9 && < 5
-    - classy-prelude-yesod >=0.10.2 && <1.0 || >=1.1
-    - yesod >=1.4.3 && <1.5
-    - yesod-core >=1.4.30 && <1.5
-    - yesod-auth >=1.4.0 && <1.5
-    - yesod-static >=1.4.0.3 && <1.6
-    - yesod-form >=1.4.0 && <1.5
-    - classy-prelude >=0.10.2
-    - classy-prelude-conduit >=0.10.2
-    - bytestring >=0.9 && <0.11
-    - text >=0.11 && <2.0
-    - persistent >=2.0 && <2.8
-    - persistent-postgresql >=2.1.1 && <2.8
-    - persistent-template >=2.0 && <2.8
-    - template-haskell
-    - shakespeare >=2.0 && <2.1
-    - hjsmin >=0.1 && <0.3
-    - monad-control >=0.3 && <1.1
-    - wai-extra >=3.0 && <3.1
-    - yaml >=0.8 && <0.9
-    - http-conduit >=2.1 && <2.3
-    - directory >=1.1 && <1.4
-    - warp >=3.0 && <3.3
-    - data-default
-    - aeson >=0.6 && <1.3
-    - conduit >=1.0 && <2.0
-    - monad-logger >=0.3 && <0.4
-    - fast-logger >=2.2 && <2.5
-    - wai-logger >=2.2 && <2.4
+license: BSD3
 
-    - fluid-idl
-    - fluid-idl-scotty
-    - mtl
-    - text
-    - safe
-    - turn-loop
-    - text-conversions
-    - random
-    - containers
-    - lens
-    - protolude
-  default-extensions:
-    - LambdaCase
-    - GeneralizedNewtypeDeriving
-    - NamedFieldPuns
-    - OverloadedStrings
-    - FlexibleInstances
-    - MultiParamTypeClasses
-  source-dirs: src
+extra-source-files:
+  - package.yaml
+  - stack.yaml
+  - README.md
+
+ghc-options: -Wall
+
+default-extensions:
+  - FlexibleContexts
+  - FlexibleInstances
+  - GADTs
+  - GeneralizedNewtypeDeriving
+  - LambdaCase
+  - MultiParamTypeClasses
+  - NamedFieldPuns
+  - OverloadedStrings
+  - RankNTypes
+  - ScopedTypeVariables
+  - TupleSections
+
+dependencies:
+  - base >= 4.9 && < 5
+  - classy-prelude-yesod >=0.10.2 && <1.0 || >=1.1
+  - yesod >=1.4.3 && <1.5
+  - yesod-core >=1.4.30 && <1.5
+  - yesod-auth >=1.4.0 && <1.5
+  - yesod-static >=1.4.0.3 && <1.6
+  - yesod-form >=1.4.0 && <1.5
+  - classy-prelude >=0.10.2
+  - classy-prelude-conduit >=0.10.2
+  - bytestring >=0.9 && <0.11
+  - text >=0.11 && <2.0
+  - persistent >=2.0 && <2.8
+  - persistent-postgresql >=2.1.1 && <2.8
+  - persistent-template >=2.0 && <2.8
+  - template-haskell
+  - shakespeare >=2.0 && <2.1
+  - hjsmin >=0.1 && <0.3
+  - monad-control >=0.3 && <1.1
+  - wai-extra >=3.0 && <3.1
+  - yaml >=0.8 && <0.9
+  - http-conduit >=2.1 && <2.3
+  - directory >=1.1 && <1.4
+  - warp >=3.0 && <3.3
+  - data-default
+  - aeson >=0.6 && <1.3
+  - conduit >=1.0 && <2.0
+  - monad-logger >=0.3 && <0.4
+  - fast-logger >=2.2 && <2.5
+  - wai-logger >=2.2 && <2.4
+  - transformers
+  - file-embed
+  - safe
+  - mtl
+  - unordered-containers
+  - containers
+  - vector
+  - time >= 1.9 && < 2
+  - case-insensitive
+  - wai
+  - fluid-idl
+  - yesod-auth-oauth2
+  - protolude
+  - time
+  - text-conversions
+  - random
+  - monad-persist
+  - genesis
+
+  - fluid-idl-scotty
+  - turn-loop
+  - lens
+
+library:
+  source-dirs: library
+  when:
+  - condition: (flag(dev)) || (flag(library-only))
+    then:
+      ghc-options:
+      - -Wall
+      - -fwarn-tabs
+      - -O0
+      cpp-options: -DDEVELOPMENT
+    else:
+      ghc-options:
+      - -Wall
+      - -fwarn-tabs
+      - -O2
+
+# Runnable executable for our application
 executables:
   aicompo:
-    dependencies:
-      - base
-      - aicompo
+    main: main.hs
+    source-dirs: executable
     ghc-options:
-      - -rtsopts
-      - -threaded
-      - -with-rtsopts=-N
-      - -Wall
-    main: Main.hs
-    source-dirs: app
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - aicompo
+    when:
+    - condition: flag(library-only)
+      buildable: false
+
+# Test suite
+tests:
+  test:
+    main: Spec.hs
+    source-dirs: test
+    ghc-options: -Wall
+    dependencies:
+    - aicompo
+    - hspec >=2.0.0
+    - yesod-test
+
+# Define flags used by "yesod devel" to make compilation faster
+flags:
+  library-only:
+    description: Build for use with "yesod devel"
+    manual: false
+    default: false
+  dev:
+    description: Turn on development settings, like auto-reload templates.
+    manual: false
+    default: false

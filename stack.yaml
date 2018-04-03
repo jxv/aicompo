@@ -1,9 +1,14 @@
 resolver: lts-9.14
 packages:
-- '.'
+- .
 extra-deps:
-- 'fluid-idl-0.0.5'
-- 'fluid-idl-scotty-0.0.0'
-- 'turn-loop-0.0.0'
+- fluid-idl-0.0.5
+- fluid-idl-scotty-0.0.0
+- turn-loop-0.0.0
+- yesod-auth-oauth2-0.4.0.1
+- load-env-0.1.1
+- monad-persist-0.0.2.0
+- genesis-0.1.0.0
+- monad-io-adapter-0.1.0.0
 flags: {}
 extra-package-dbs: []

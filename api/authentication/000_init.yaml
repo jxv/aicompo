@@ -1,0 +1,62 @@
+fluid:
+  major: 0
+  minor: 0
+
+pull:
+  protocol: http
+  name: Api
+  host: aicompo.herokuapp.com
+  meta: Unit
+  path: /api
+  port: 80
+  error: Unit
+
+schema:
+
+  Date:
+    m: [year: Int, month: Int, day: Int]
+
+  Seconds: Int
+
+  UserId: String
+
+  Email: String
+
+  Role: [Admin, Member]
+
+  User:
+    m: [userId: UserId, email: {n: Option, p: Email}, role: Role]
+
+  GetUser:
+    m: [userId: UserId]
+    o: User
+
+  GetUserCount:
+    o: Int
+
+# Authentication
+
+  AccessToken: String
+
+  ClientId: String
+
+  ClientSecret: String
+
+  ClientCredentials:
+    m: [clientId: ClientId, clientSecret: ClientSecret, created: Date]
+
+  ClientCredentialsGrant:
+    m: [accessToken: AccessToken, expiresIn: Seconds]
+
+  GetClientCredentials:
+    m: [userId: UserId]
+    o: {n: List, p: ClientCredentials}
+    c: Attain a list of valid client credentials
+
+  PostClientCredentialsGrant:
+    m: [clientId: ClientId, clientSecret: ClientSecret]
+    o: ClientCredentialsGrant
+
+  DeleteClientCredentials:
+    m: [clientId: ClientId]
+    o: Unit

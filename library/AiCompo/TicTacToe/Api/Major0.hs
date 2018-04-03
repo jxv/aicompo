@@ -33,8 +33,6 @@ module AiCompo.TicTacToe.Api.Major0
   , Player(..)
   , Error(..)
   , Final(..)
-  , ticTacToe'Scotty'Post
-  , ticTacToe'Scotty'Get
   ) where
 
 -- Imports
@@ -45,7 +43,6 @@ import qualified Data.IORef as IO
 import qualified Data.String as P (IsString)
 import qualified Fluid.Imports as R
 import qualified Fluid.Server as C
-import qualified Fluid.Server.Scotty as Scotty
 
 --------------------------------------------------------
 -- Configs
@@ -161,16 +158,6 @@ data Final
 --------------------------------------------------------
 -- Add-ons
 --------------------------------------------------------
-
-ticTacToe'Scotty'Post
-  :: (Scotty.ScottyError e, R.MonadIO m, TicTacToe'Service meta m, R.MonadCatch m)
-  => ([(Scotty.LazyText, Scotty.LazyText)] -> C.Hooks m AccessToken meta)
-  -> C.Pull
-  -> Scotty.ScottyT e m ()
-ticTacToe'Scotty'Post _hooks _pull = Scotty.respondSingleton _pull ticTacToe'version (\_xtra -> ticTacToe'handler _hooks _xtra)
-
-ticTacToe'Scotty'Get :: (Scotty.ScottyError e, R.MonadIO m) => C.Pull -> Scotty.ScottyT e m ()
-ticTacToe'Scotty'Get = Scotty.getSpec P.$ R.toJSON [ticTacToe'spec]
 
 --------------------------------------------------------
 -- Request handling

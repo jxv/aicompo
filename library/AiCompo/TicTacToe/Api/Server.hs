@@ -15,8 +15,6 @@
 module AiCompo.TicTacToe.Api.Server
   ( ticTacToe'handlerMap
   , ticTacToe'spec
-  , ticTacToe'Scotty'Post
-  , ticTacToe'Scotty'Get
   , V0.AccessToken(..)
   , V0.UserId(..)
   , V0.Group(..)
@@ -39,7 +37,6 @@ module AiCompo.TicTacToe.Api.Server
 import qualified Prelude as P
 import qualified Fluid.Server as C (RuntimeThrower, Hooks, Request, Response, Major, Minor, Pull)
 import qualified Fluid.Imports as R
-import qualified Fluid.Server.Scotty as Scotty
 import qualified AiCompo.TicTacToe.Api.Major0 as V0
   ( TicTacToe'Service(..)
   , TicTacToe'Thrower(..)
@@ -80,18 +77,3 @@ ticTacToe'spec :: R.Value
 ticTacToe'spec = R.toJSON
   [ V0.ticTacToe'spec
   ]
-
-ticTacToe'Scotty'Post
-  ::
-    ( Scotty.ScottyError e
-    , R.MonadIO m
-    , R.MonadCatch m
-    , V0.TicTacToe'Service meta0 m
-    )
-  => C.Pull
-  -> ([(Scotty.LazyText, Scotty.LazyText)] -> C.Hooks m V0.AccessToken meta0)
-  -> Scotty.ScottyT e m ()
-ticTacToe'Scotty'Post pull hooks0 = Scotty.respond pull (ticTacToe'handlerMap hooks0)
-
-ticTacToe'Scotty'Get :: (Scotty.ScottyError e, R.MonadIO m) => C.Pull -> Scotty.ScottyT e m ()
-ticTacToe'Scotty'Get = Scotty.getSpec ticTacToe'spec

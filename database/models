@@ -1,0 +1,32 @@
+User
+  created UTCTime
+  public Text
+  email Text Maybe
+  role Role
+  UniqueUserPublic public
+  deriving Typeable
+
+UserXGithub
+  created UTCTime
+  user Text
+  github Text
+  email Text
+  UniqueUserXGithubUser user
+  UniqueUserXGithubGithub github
+  deriving Show
+
+ClientCredentials
+  created UTCTime
+  user Text
+  clientId Text
+  clientSecret Text
+  UniqueClientCredentialsCilentId clientId
+  deriving Show
+
+ClientCredentialsToken
+  created UTCTime
+  user Text
+  accessToken Text
+  expiresIn UTCTime
+  UniqueClientCredentialsTokenAccessToken accessToken
+  deriving Show

@@ -1,0 +1,34 @@
+<h1>
+  Developer API
+<br />
+$maybe creds <- mcreds
+  <h2>
+    OAuth2
+  <br />
+  <h4>
+    Client Credentials
+  <br />
+  $forall (clientId,clientSecret) <- creds
+    <div>
+      <b>Client ID:&nbsp;
+      <span .key-code>
+        #{clientId}
+    <div>
+      <b>Client Secret:&nbsp;
+      <span .key-code>
+        #{clientSecret}
+    <br />
+    <form action=@{ClientCredentialsEntityDeleteR clientId} method=post>
+      <button type=submit .btn-xs .btn-danger>
+        Delete
+    <br />
+    <br />
+  $if (length creds < 2)
+    <form action=@{ClientCredentialsR} method=post>
+      <button type=submit .btn-sm .btn-primary>
+        Add Keys
+  <br />
+  <hr />
+
+<h2>
+  API Documentation
