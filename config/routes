@@ -2,7 +2,16 @@
 -- Syntax for this file here: https://www.yesodweb.com/book/routing-and-handlers
 
 /static StaticR Static appStatic
+/android-chrome-192x192.png AndroidChrome192R GET
+/android-chrome-384x384.png AndroidChrome384R GET
+/apple-touch-icon.png AppleTouchIconR GET
+/browserconfig.xml BrowserconfigR GET
+/favicon-16x16.png Favicon16R GET
+/favicon-32x32.png Favicon32R GET
 /favicon.ico FaviconR GET
+/mstile-150x150.png Mstile150R GET
+/safari-pinned-tab.svg SafariPinnedTabR GET
+/site.webmanifest SiteWebmanifestR GET
 /robots.txt RobotsR GET
 / HomeR GET
 /api/authentication ApiAuthenticationR GET POST

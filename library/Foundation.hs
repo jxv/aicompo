@@ -154,6 +154,15 @@ instance Yesod App where
   isAuthorized (AuthR _) _ = return Authorized
   isAuthorized HomeR _ = return Authorized
   isAuthorized FaviconR _ = return Authorized
+  isAuthorized AndroidChrome192R _ = return Authorized
+  isAuthorized AndroidChrome384R _ = return Authorized
+  isAuthorized AppleTouchIconR _ = return Authorized
+  isAuthorized BrowserconfigR _ = return Authorized
+  isAuthorized Favicon16R _ = return Authorized
+  isAuthorized Favicon32R _ = return Authorized
+  isAuthorized Mstile150R _ = return Authorized
+  isAuthorized SafariPinnedTabR _ = return Authorized
+  isAuthorized SiteWebmanifestR _ = return Authorized
   isAuthorized RobotsR _ = return Authorized
   isAuthorized (StaticR _) _ = return Authorized
   isAuthorized ApiAuthenticationR _ = return Authorized
