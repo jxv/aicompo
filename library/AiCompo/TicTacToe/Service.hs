@@ -199,6 +199,7 @@ instance G.Play Game where
   play = G.play'
 
 instance G.Interact Game where
+  endTurn = endTurn'
   move = move'
   forfeit = forfeit'
   end = end'
@@ -251,7 +252,11 @@ insertAtLoc' loc player = do
   let board' = G.insertPlayer loc player (G.sBoard st)
   let st' = G.State board' ((board', G.Action player loc) : G.sFrames st)
   put st'
-  let step = TL.Step st' Nothing
+
+endTurn' :: (MonadIO m, MonadReader (G.Player -> Session) m, MonadState G.State m) => G.Player -> m ()
+endTurn' player = do
+  st <- get
+  let step = TL.Step st Nothing
   let opponent = G.getOpponent player
   chan <- asks (\getSession -> TL.sStep $ getSession opponent)
   liftIO $ writeChan chan step

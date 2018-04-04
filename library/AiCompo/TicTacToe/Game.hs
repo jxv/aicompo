@@ -72,12 +72,15 @@ play' p0 p1 = do
       insertAtLoc loc p0
       res <- getResult
       case res of
-        Unfinished -> play p1 p0
+        Unfinished -> do
+          endTurn p0
+          play p1 p0
         Winner _ -> end (Win p0) (Lose p1)
         Tie -> tie
     else forfeit (Win p1) (Lose p0)
 
 class Monad m => Interact m where
+  endTurn :: Player -> m ()
   move :: Player -> m Loc
   forfeit :: Win Player -> Lose Player -> m ()
   end :: Win Player -> Lose Player -> m ()
