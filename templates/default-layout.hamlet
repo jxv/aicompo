@@ -3,22 +3,32 @@
 <nav .navbar.navbar-default.navbar-static-top>
     <div .container>
         <div .navbar-header>
-            <button type="button" .navbar-toggle.collapsed data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
+            <a .navbar-brand href=@{HomeR}>
+                <table>
+                  <tr>
+                    <td>
+                      <img alt="Brand" src=@{StaticR img_logo_png} width="64px" height="64px">
+                    <td>
+                      <h1 style="font-family: 'Audiowide', cursive; color: #000">
+                        &nbsp;AI {COMPO}
+
+            <button type="button" style="background-color: transparent" .navbar-toggle.collapsed data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span .sr-only>Toggle navigation</span>
+                <span .icon-bar style="background-color: black;">
+                <span .icon-bar style="background-color: black;">
+                <span .icon-bar style="background-color: black;">
 
         <div #navbar .collapse.navbar-collapse>
             <ul .nav.navbar-nav>
                 $forall MenuItem label route _ <- navbarLeftFilteredMenuItems
                     <li :Just route == mcurrentRoute:.active>
-                        <a href="@{route}">#{label}
+                        <a href="@{route}" style="color:#000">#{label}
 
             <ul .nav.navbar-nav.navbar-right>
                 $forall MenuItem label route _ <- navbarRightFilteredMenuItems
                     <li :Just route == mcurrentRoute:.active>
-                        <a href="@{route}">#{label}
+                        <a href="@{route}" style="color:#000">#{label}
+
 
 <!-- Page Contents -->
 
@@ -27,14 +37,14 @@ $if (Just HomeR == mcurrentRoute)
 $else
     <div .container>
         <div .row>
-            <div .col-md-10 .col-md-offset-1>
+            <div .col-md-12>
                 ^{widget}
 
 <!-- Footer -->
 <footer .footer>
     <div .container>
-        <p .text-muted>
-            <hr>
-            <a href=@{DeveloperR}>Developer API</a>
-            <br />
-            #{appCopyright $ appSettings master}
+      <br />
+      <p>
+          <a href=@{DeveloperR}>Developer API</a>
+          <br />
+          #{appCopyright $ appSettings master}

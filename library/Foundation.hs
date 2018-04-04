@@ -131,12 +131,7 @@ instance Yesod App where
     mcurrentRoute <- getCurrentRoute
     (title, parents) <- breadcrumbs
     let menuItems =
-          [ NavbarLeft $ MenuItem
-            { menuItemLabel = "Home"
-            , menuItemRoute = HomeR
-            , menuItemAccessCallback = True
-            }
-          , NavbarRight $ MenuItem
+          [ NavbarRight $ MenuItem
               { menuItemLabel = "Login"
               , menuItemRoute = AuthR LoginR
               , menuItemAccessCallback = isNothing muser

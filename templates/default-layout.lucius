@@ -1,15 +1,20 @@
-.masthead,
 .navbar {
-    background-color: rgb(27, 28, 29);
+    background-color: transparent;
+    color: #000;
 }
 
 .navbar-default .navbar-nav > .active > a {
     background-color: transparent;
     border-bottom: 2px solid white;
+    color: #000;
 }
 
 .navbar-nav {
     padding-bottom: 1em;
+}
+
+a.navbar-brand {
+    padding: 6px 10px;
 }
 
 .masthead {
@@ -22,7 +27,7 @@
 .masthead .header {
     max-width: 700px;
     margin: 0 auto;
-    font-family: Lato,'Helvetica Neue',Arial,Helvetica,sans-serif;
+    font-family: 'Nova Square', monospace;
 }
 
 .masthead h1.header {
@@ -86,4 +91,8 @@
   background-color: #eee;
   border-radius: 3px;
   font-family: monospace;
+}
+
+body {
+  font-family: 'Nova Square', monospace;
 }
