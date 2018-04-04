@@ -4,7 +4,10 @@ import Control.Monad (forever)
 import Control.Applicative ((<|>), (<*>))
 import Control.Concurrent (readChan, writeChan, forkIO, killThread, ThreadId)
 import Control.Monad.IO.Class (MonadIO(..))
+import Control.Monad.Reader (ReaderT, runReaderT, MonadReader(..), asks)
+import Control.Monad.State (StateT, evalStateT, MonadState, modify, gets, put, get)
 import qualified Data.List as List
+import qualified Data.Map as Map
 import Data.String (IsString(..))
 import Data.Text (Text)
 import Data.Text.Conversions (ToText(..),FromText(..))
@@ -53,15 +56,16 @@ data TUser = TUser
 
 --
 
-type Step = TL.Step G.State G.Terminal
+type Step = TL.Step G.State G.Final
 type Result = TL.Result GameId G.Player UserId G.State ()
 type Starter = TL.Starter GameId G.Player UserId
 type Lobby = TL.Lobby GameId G.Player UserId IO
-type Sessions = TL.Sessions GameId UserId G.Player G.Input G.State G.Terminal IO
-type SessionEntry = TL.SessionEntry G.Player G.Input G.State G.Terminal IO
+type Session = TL.Session G.Loc G.State G.Final
+type Sessions = TL.Sessions GameId UserId G.Player G.Loc G.State G.Final IO
+type SessionEntry = TL.SessionEntry G.Player G.Loc G.State G.Final IO
 type Registry = TL.Registry UserId TUser IO
 type Results = TL.Results GameId G.Player UserId G.State () IO
-type LabeledSession = TL.LabeledSession UserId G.Input G.State G.Terminal
+type LabeledSession = TL.LabeledSession UserId G.Loc G.State G.Final
 
 data Components = Components
   { cLobby :: Lobby
@@ -88,21 +92,33 @@ postStart components userId = do
     Nothing -> T0.ticTacToe'throw T0.Error'Timeout
     Just TL.Starter{TL.sSessionId,TL.sUserIds} -> do
       step <- getStep sessions sSessionId userId
-
       let gameId = T0.GameId (toText sSessionId)
       let users = T0.Users { T0.userso = userIdO, T0.usersx = userIdX }
           userIdX = T0.UserId (toText $ sUserIds G.Player'X)
           userIdO = T0.UserId (toText $ sUserIds G.Player'O)
-      let terminal = case TL.sTerminal step of
-            Nothing -> Nothing
-            Just _ -> Nothing
-      let board = case TL.sState step of
-            G.State -> emptyBoard
+      return $ T0.Init gameId users (gameStepToApiState step)
 
-      return $ T0.Init gameId users (T0.State (T0.Board board) terminal)
+gameFinalToApiFinal :: G.Final -> T0.Final
+gameFinalToApiFinal = \case
+  G.Final'Won -> T0.Final'Won
+  G.Final'Loss -> T0.Final'Loss
+  G.Final'Tied -> T0.Final'Tied
+
+gameBoardToApiBoard :: G.Board -> T0.Board
+gameBoardToApiBoard b = T0.Board [ [ toPlayer <$> Map.lookup (G.Loc x y) (G.bCells b) | x <- [0..2]] | y <- [0..2] ]
+  where
+    toPlayer :: G.Player -> T0.Player
+    toPlayer = \case
+      G.Player'X -> T0.Player'X
+      G.Player'O -> T0.Player'O
+
+gameStepToApiState :: Step -> T0.State
+gameStepToApiState (TL.Step st terminal) = T0.State
+  (gameBoardToApiBoard $ G.sBoard st)
+  (gameFinalToApiFinal <$> terminal)
 
 postMove :: (MonadIO m, T0.TicTacToe'Thrower m) => Components -> UserId -> T0.PostMove -> m T0.State
-postMove components userId (T0.PostMove _loc gameId) = do
+postMove components userId (T0.PostMove loc gameId) = do
   let sessionId = GameId (toText gameId)
   let sessions = cSessions components
   sessionRecord' <- liftIO $ TL.sFindSession sessions sessionId
@@ -113,9 +129,9 @@ postMove components userId (T0.PostMove _loc gameId) = do
         Nothing -> T0.ticTacToe'throw T0.Error'Unauthorized -- Non-existent user id
         Just labeledSession -> do
           let session = TL.lsSession labeledSession
-          liftIO $ writeChan (TL.sInput session) G.Input
-          _ <- liftIO $ readChan (TL.sStep session)
-          return $ T0.State (T0.Board emptyBoard) Nothing
+          liftIO $ writeChan (TL.sInput session) (G.Loc (T0.locx loc) (T0.locy loc))
+          step <- liftIO $ readChan (TL.sStep session)
+          return (gameStepToApiState step)
 
 unrep :: [player] -> (session -> UserId) -> (player -> session) -> UserId -> Maybe session
 unrep players sessionToUserId rep userId = List.foldl' (<|>) Nothing $ map
@@ -123,9 +139,6 @@ unrep players sessionToUserId rep userId = List.foldl' (<|>) Nothing $ map
   players
 
 --
-
-emptyBoard :: [[Maybe T.Player]]
-emptyBoard = [[Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing]]
 
 getStep :: (MonadIO m, T0.TicTacToe'Thrower m) => Sessions -> GameId -> UserId -> m Step
 getStep sessions gameId userId = do
@@ -168,11 +181,77 @@ sessionWorker _sessions _results TL.Starter{} = do
   sessionO <- TL.newSessionWithChan
 
   threadId <- forkIO . forever $ do
-    writeChan (TL.sStep sessionX) $ TL.Step { TL.sTerminal = Nothing, TL.sState = G.State }
-    _ <- readChan (TL.sInput sessionX)
-    writeChan (TL.sStep sessionO) $ TL.Step { TL.sTerminal = Nothing, TL.sState = G.State }
-    _ <- readChan (TL.sInput sessionO)
-    return ()
+    runGame G.game (\case G.Player'X -> sessionX; G.Player'O -> sessionO, G.newState)
 
   let thread = TL.Thread threadId (killThread threadId)
   return $ TL.SessionEntry thread $ \case G.Player'X -> sessionX; G.Player'O -> sessionO
+
+--
+
+newtype Game a = Game (ReaderT (G.Player -> Session) (StateT G.State IO) a)
+  deriving (Functor, Applicative, Monad, MonadReader (G.Player -> Session), MonadState G.State, MonadIO)
+
+runGame :: Game a -> (G.Player -> Session, G.State) -> IO a
+runGame (Game m) (getSession, st) = evalStateT (runReaderT m getSession) st
+
+instance G.Play Game where
+  initiate = initiate'
+  play = G.play'
+
+instance G.Interact Game where
+  move = move'
+  forfeit = forfeit'
+  end = end'
+  tie = tie'
+
+instance G.BoardManager Game where
+  isOpenLoc = G.isOpenLoc'
+  insertAtLoc = insertAtLoc'
+  getResult = G.getResult'
+
+instance G.HasBoard Game where
+  getBoard = gets G.sBoard
+  putBoard b = modify $ \s -> s { G.sBoard = b }
+
+initiate' :: (MonadIO m, MonadReader (G.Player -> Session) m, MonadState G.State m) => G.Player -> m ()
+initiate' player = do
+  st <- get
+  getSession <- ask
+  liftIO $ writeChan (TL.sStep $ getSession player) (TL.Step st Nothing)
+
+move' :: (MonadIO m, MonadReader (G.Player -> Session) m, MonadState G.State m) => G.Player -> m G.Loc
+move' player = do
+  chan <- asks (\getSession -> TL.sInput $ getSession player)
+  liftIO $ readChan chan
+
+end' :: (MonadIO m, MonadReader (G.Player -> Session) m, MonadState G.State m) => G.Win G.Player -> G.Lose G.Player -> m ()
+end' (G.Win w) (G.Lose l) = do
+  st <- get
+  getSession <- ask
+  liftIO $ writeChan (TL.sStep $ getSession w) (TL.Step st (Just G.Final'Won))
+  liftIO $ writeChan (TL.sStep $ getSession l) (TL.Step st (Just G.Final'Loss))
+
+forfeit' :: (MonadIO m, MonadReader (G.Player -> Session) m, MonadState G.State m) => G.Win G.Player -> G.Lose G.Player -> m ()
+forfeit' (G.Win w) (G.Lose l) = do
+  st <- get
+  getSession <- ask
+  liftIO $ writeChan (TL.sStep $ getSession w) (TL.Step st (Just G.Final'Won))
+  liftIO $ writeChan (TL.sStep $ getSession l) (TL.Step st (Just G.Final'Loss))
+
+tie' :: (MonadIO m, MonadReader (G.Player -> Session) m, MonadState G.State m) => m ()
+tie' = do
+  st <- get
+  getSession <- ask
+  liftIO $ writeChan (TL.sStep $ getSession G.Player'X) (TL.Step st (Just G.Final'Tied))
+  liftIO $ writeChan (TL.sStep $ getSession G.Player'O) (TL.Step st (Just G.Final'Tied))
+
+insertAtLoc' :: (MonadIO m, MonadReader (G.Player -> Session) m, MonadState G.State m) => G.Loc -> G.Player -> m ()
+insertAtLoc' loc player = do
+  st <- get
+  let board' = G.insertPlayer loc player (G.sBoard st)
+  let st' = G.State board' ((board', G.Action player loc) : G.sFrames st)
+  put st'
+  let step = TL.Step st' Nothing
+  let opponent = G.getOpponent player
+  chan <- asks (\getSession -> TL.sStep $ getSession opponent)
+  liftIO $ writeChan chan step

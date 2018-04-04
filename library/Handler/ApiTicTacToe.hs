@@ -12,11 +12,6 @@ import qualified AiCompo.TicTacToe.Api.Server as Api
 import qualified AiCompo.TicTacToe.Api.Major0 as V0
 import qualified AiCompo.TicTacToe.Service as TS
 import Import
-import AiCompo.User
-
-import OAuth2.ClientCredentials
-
-import Import
 
 getApiTicTacToeR :: Handler Value
 getApiTicTacToeR = return Api.ticTacToe'spec
@@ -24,7 +19,12 @@ getApiTicTacToeR = return Api.ticTacToe'spec
 postApiTicTacToeR :: Handler Value
 postApiTicTacToeR = do
   v <- (requireJsonBody :: Handler Value)
-  let handlerMap = Api.ticTacToe'handlerMap (const $ defHooks {metaMiddleware = ticTacToeMetaMiddleware0}) ()
+  let handlerMap = Api.ticTacToe'handlerMap
+        (const $ Hooks
+          { metaMiddleware = ticTacToeMetaMiddleware0
+          , sandboxLimits = \_ -> return $ defLimits { serviceCalls = Just 1 }
+          })
+        ()
   runFluid handlerMap v
 
 ticTacToeMetaMiddleware0 :: V0.AccessToken -> Handler TS.UserId

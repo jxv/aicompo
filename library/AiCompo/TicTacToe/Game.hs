@@ -32,14 +32,13 @@ data Result
   | Winner Player
   deriving (Show, Eq)
 
-data Input = Input
-  deriving (Show, Eq)
-
 data State = State
-  deriving (Show, Eq)
+  { sBoard :: Board
+  , sFrames :: [(Board, Action)]
+  } deriving (Show, Eq)
 
-data Terminal = Terminal
-  deriving (Show, Eq)
+newState :: State
+newState = State emptyBoard []
 
 newtype Win a = Win a
   deriving (Eq, Show, Functor)
@@ -48,17 +47,20 @@ newtype Lose a = Lose a
   deriving (Eq, Show, Functor)
 
 data Final
-  = Won
-  | Loss
-  | Tied
+  = Final'Won
+  | Final'Loss
+  | Final'Tied
   deriving (Show, Eq)
 
 --
 
 game :: Play m => m ()
-game = play Player'X Player'O
+game = do
+  initiate Player'X
+  play Player'X Player'O
 
 class Monad m => Play m where
+  initiate :: Player -> m ()
   play :: Player -> Player -> m ()
 
 play' :: (Interact m, BoardManager m, Play m) => Player -> Player -> m ()
@@ -110,17 +112,6 @@ insertAtLoc' loc p = do
   board <- getBoard
   putBoard $ insertPlayer loc p board
 
-{-
-insertAtLoc' :: (MonadIO m, MonadReader Env m, HasBoard m) => Loc -> XO -> m ()
-insertAtLoc' loc xo = do
-  board <- getBoard
-  let board' = insertAtLoc_ loc xo board
-  putBoard board'
-  let step = Step board' Nothing
-  f <- asks (writeChan . _gameObjectStep . gameObj (yinYang xo))
-  liftIO $ f step
--}
-
 getResult' :: HasBoard m => m Result
 getResult' = do
   board <- getBoard
@@ -150,3 +141,7 @@ class Monad m => HasBoard m where
 
 emptyBoard :: Board
 emptyBoard = Board Map.empty 3
+
+getOpponent :: Player -> Player
+getOpponent Player'X = Player'O
+getOpponent Player'O = Player'X
