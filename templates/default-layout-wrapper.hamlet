@@ -13,6 +13,7 @@ $newline never
     <meta name="author" content="">
 
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="shortcut icon" href=@{FaviconR} type="image/x-icon" />
     <link href="https://fonts.googleapis.com/css?family=Audiowide|Nova+Square" rel="stylesheet">
 
     ^{pageHead pc}
