@@ -29,10 +29,14 @@ module AiCompo.TicTacToe.Api.Major0
   , State(..)
   , Users(..)
   , Init(..)
+  , Frame(..)
+  , Playback(..)
   , PostMove(..)
+  , GetPlayback(..)
   , Player(..)
   , Error(..)
   , Final(..)
+  , Result(..)
   ) where
 
 -- Imports
@@ -68,10 +72,12 @@ class C.ServiceThrower m => TicTacToe'Thrower m where
 class P.Monad m => TicTacToe'Service meta m where
   ticTacToe'PostStart :: meta -> m Init
   ticTacToe'PostMove :: meta -> PostMove -> m State
+  ticTacToe'GetPlayback :: meta -> GetPlayback -> m Playback
 
 instance TicTacToe'Service meta m => TicTacToe'Service meta (M.ExceptT C.Response m) where
   ticTacToe'PostStart _meta = M.lift P.$ ticTacToe'PostStart _meta
   ticTacToe'PostMove _meta = M.lift P.. ticTacToe'PostMove _meta
+  ticTacToe'GetPlayback _meta = M.lift P.. ticTacToe'GetPlayback _meta
 
 --------------------------------------------------------
 -- Types
@@ -127,10 +133,30 @@ data Init = Init
   , initState :: State
   } deriving (P.Show, P.Eq)
 
+-- Struct: Frame
+data Frame = Frame
+  { frameBoard :: Board
+  , frameLoc :: Loc
+  , framePlayer :: Player
+  } deriving (P.Show, P.Eq)
+
+-- Struct: Playback
+data Playback = Playback
+  { playbackFrames :: [Frame]
+  , playbackx :: UserId
+  , playbacko :: UserId
+  , playbackResult :: Result
+  } deriving (P.Show, P.Eq)
+
 -- Struct: PostMove
 data PostMove = PostMove
   { postMoveLoc :: Loc
   , postMoveGameId :: GameId
+  } deriving (P.Show, P.Eq)
+
+-- Struct: GetPlayback
+data GetPlayback = GetPlayback
+  { getPlaybackGameId :: GameId
   } deriving (P.Show, P.Eq)
 
 -- Enumeration: Player
@@ -153,6 +179,13 @@ data Final
   = Final'Won
   | Final'Loss
   | Final'Tied
+  deriving (P.Show, P.Eq)
+
+-- Enumeration: Result
+data Result
+  = Result'Tie
+  | Result'WinnerX
+  | Result'WinnerO
   deriving (P.Show, P.Eq)
 
 --------------------------------------------------------
@@ -203,6 +236,7 @@ ticTacToe'ApiCall meta' apiCall' = case C.parseApiCall ticTacToe'ApiParser apiCa
   P.Just x' -> case x' of
     TicTacToe'Api'PostStart -> C.toVal P.<$> ticTacToe'PostStart meta'
     TicTacToe'Api'PostMove a' -> C.toVal P.<$> ticTacToe'PostMove meta' a'
+    TicTacToe'Api'GetPlayback a' -> C.toVal P.<$> ticTacToe'GetPlayback meta' a'
 
 -- API Parser
 ticTacToe'ApiParser :: C.ApiParser TicTacToe'Api
@@ -212,6 +246,7 @@ ticTacToe'ApiParser = C.ApiParser
      ]
   , C.struct = R.fromList
      [ ("PostMove", v TicTacToe'Api'PostMove)
+     , ("GetPlayback", v TicTacToe'Api'GetPlayback)
      ]
   , C.enumeration = R.empty
   , C.wrap = R.empty
@@ -223,6 +258,7 @@ ticTacToe'ApiParser = C.ApiParser
 data TicTacToe'Api
   = TicTacToe'Api'PostStart
   | TicTacToe'Api'PostMove PostMove
+  | TicTacToe'Api'GetPlayback GetPlayback
   deriving (P.Show, P.Eq)
 
 --------------------------------------------------------
@@ -439,6 +475,67 @@ instance R.FromJSON Init where
       P.Nothing -> P.mzero
       P.Just _y -> P.return _y
 
+instance C.ToVal Frame where
+  toVal Frame
+    { frameBoard
+    , frameLoc
+    , framePlayer
+    } = C.Val'ApiVal P.$ C.ApiVal'Struct P.$ C.Struct P.$ R.fromList
+    [ ("board", C.toVal frameBoard)
+    , ("loc", C.toVal frameLoc)
+    , ("player", C.toVal framePlayer)
+    ]
+
+instance C.FromVal Frame where
+  fromVal = \case
+    C.Val'ApiVal (C.ApiVal'Struct (C.Struct _m)) -> Frame
+      P.<$> C.getMember _m "board"
+      P.<*> C.getMember _m "loc"
+      P.<*> C.getMember _m "player"
+    _ -> P.Nothing
+
+instance R.ToJSON Frame where
+  toJSON = R.toJSON P.. C.toVal
+
+instance R.FromJSON Frame where
+  parseJSON _v = do
+    _x <- R.parseJSON _v
+    case C.fromVal _x of
+      P.Nothing -> P.mzero
+      P.Just _y -> P.return _y
+
+instance C.ToVal Playback where
+  toVal Playback
+    { playbackFrames
+    , playbackx
+    , playbacko
+    , playbackResult
+    } = C.Val'ApiVal P.$ C.ApiVal'Struct P.$ C.Struct P.$ R.fromList
+    [ ("frames", C.toVal playbackFrames)
+    , ("x", C.toVal playbackx)
+    , ("o", C.toVal playbacko)
+    , ("result", C.toVal playbackResult)
+    ]
+
+instance C.FromVal Playback where
+  fromVal = \case
+    C.Val'ApiVal (C.ApiVal'Struct (C.Struct _m)) -> Playback
+      P.<$> C.getMember _m "frames"
+      P.<*> C.getMember _m "x"
+      P.<*> C.getMember _m "o"
+      P.<*> C.getMember _m "result"
+    _ -> P.Nothing
+
+instance R.ToJSON Playback where
+  toJSON = R.toJSON P.. C.toVal
+
+instance R.FromJSON Playback where
+  parseJSON _v = do
+    _x <- R.parseJSON _v
+    case C.fromVal _x of
+      P.Nothing -> P.mzero
+      P.Just _y -> P.return _y
+
 instance C.ToVal PostMove where
   toVal PostMove
     { postMoveLoc
@@ -459,6 +556,29 @@ instance R.ToJSON PostMove where
   toJSON = R.toJSON P.. C.toVal
 
 instance R.FromJSON PostMove where
+  parseJSON _v = do
+    _x <- R.parseJSON _v
+    case C.fromVal _x of
+      P.Nothing -> P.mzero
+      P.Just _y -> P.return _y
+
+instance C.ToVal GetPlayback where
+  toVal GetPlayback
+    { getPlaybackGameId
+    } = C.Val'ApiVal P.$ C.ApiVal'Struct P.$ C.Struct P.$ R.fromList
+    [ ("gameId", C.toVal getPlaybackGameId)
+    ]
+
+instance C.FromVal GetPlayback where
+  fromVal = \case
+    C.Val'ApiVal (C.ApiVal'Struct (C.Struct _m)) -> GetPlayback
+      P.<$> C.getMember _m "gameId"
+    _ -> P.Nothing
+
+instance R.ToJSON GetPlayback where
+  toJSON = R.toJSON P.. C.toVal
+
+instance R.FromJSON GetPlayback where
   parseJSON _v = do
     _x <- R.parseJSON _v
     case C.fromVal _x of
@@ -542,10 +662,35 @@ instance R.FromJSON Final where
       P.Nothing -> P.mzero
       P.Just _y -> P.return _y
 
+instance C.ToVal Result where
+  toVal = \case
+    Result'Tie -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "Tie" P.Nothing
+    Result'WinnerX -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "WinnerX" P.Nothing
+    Result'WinnerO -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "WinnerO" P.Nothing
+
+instance C.FromVal Result where
+  fromVal = \case
+    C.Val'ApiVal (C.ApiVal'Enumeral (C.Enumeral _tag _m)) -> case (_tag,_m) of
+      ("Tie", P.Nothing) -> P.Just Result'Tie
+      ("WinnerX", P.Nothing) -> P.Just Result'WinnerX
+      ("WinnerO", P.Nothing) -> P.Just Result'WinnerO
+      _ -> P.Nothing
+    _ -> P.Nothing
+
+instance R.ToJSON Result where
+  toJSON = R.toJSON P.. C.toVal
+
+instance R.FromJSON Result where
+  parseJSON _v = do
+    _x <- R.parseJSON _v
+    case C.fromVal _x of
+      P.Nothing -> P.mzero
+      P.Just _y -> P.return _y
+
 --------------------------------------------------------
 -- Spec
 --------------------------------------------------------
 
 ticTacToe'spec :: R.Value
 ticTacToe'spec = v
-  where P.Just v = R.decode "{\"fluid\":{\"major\":0,\"minor\":0},\"pull\":{\"protocol\":\"https\",\"name\":\"TicTacToe\",\"host\":\"aicompo.net\",\"port\":80,\"path\":\"/api/tictactoe\",\"meta\":\"AccessToken\",\"error\":\"Error\"},\"schema\":{\"AccessToken\":\"String\",\"UserId\":\"String\",\"Group\":\"String\",\"GameId\":\"String\",\"GameToken\":\"String\",\"Player\":[\"X\",\"O\"],\"Error\":[\"AccessToken\",\"GameId\",\"Unauthorized\",\"MoveLoc\",\"Timeout\"],\"Board\":{\"m\":[{\"cells\":{\"n\":\"List\",\"p\":{\"n\":\"List\",\"p\":{\"n\":\"Option\",\"p\":\"Player\"}}}}]},\"Final\":[\"Won\",\"Loss\",\"Tied\"],\"Loc\":{\"m\":[{\"x\":\"Int\"},{\"y\":\"Int\"}]},\"State\":{\"m\":[{\"board\":\"Board\"},{\"final\":{\"n\":\"Option\",\"p\":\"Final\"}}]},\"Users\":{\"m\":[{\"x\":\"UserId\"},{\"o\":\"UserId\"}]},\"Init\":{\"m\":[{\"gameId\":\"GameId\"},{\"users\":\"Users\"},{\"state\":\"State\"}]},\"PostStart\":{\"o\":\"Init\"},\"PostMove\":{\"m\":[{\"loc\":\"Loc\"},{\"gameId\":\"GameId\"}],\"o\":\"State\"}},\"version\":{\"major\":0,\"minor\":0}}"
+  where P.Just v = R.decode "{\"fluid\":{\"major\":0,\"minor\":0},\"pull\":{\"protocol\":\"https\",\"name\":\"TicTacToe\",\"host\":\"aicompo.net\",\"port\":80,\"path\":\"/api/tictactoe\",\"meta\":\"AccessToken\",\"error\":\"Error\"},\"schema\":{\"AccessToken\":\"String\",\"UserId\":\"String\",\"Group\":\"String\",\"GameId\":\"String\",\"GameToken\":\"String\",\"Player\":[\"X\",\"O\"],\"Error\":[\"AccessToken\",\"GameId\",\"Unauthorized\",\"MoveLoc\",\"Timeout\"],\"Board\":{\"m\":[{\"cells\":{\"n\":\"List\",\"p\":{\"n\":\"List\",\"p\":{\"n\":\"Option\",\"p\":\"Player\"}}}}]},\"Final\":[\"Won\",\"Loss\",\"Tied\"],\"Loc\":{\"m\":[{\"x\":\"Int\"},{\"y\":\"Int\"}]},\"State\":{\"m\":[{\"board\":\"Board\"},{\"final\":{\"n\":\"Option\",\"p\":\"Final\"}}]},\"Users\":{\"m\":[{\"x\":\"UserId\"},{\"o\":\"UserId\"}]},\"Init\":{\"m\":[{\"gameId\":\"GameId\"},{\"users\":\"Users\"},{\"state\":\"State\"}]},\"Frame\":{\"m\":[{\"board\":\"Board\"},{\"loc\":\"Loc\"},{\"player\":\"Player\"}]},\"Result\":[\"Tie\",\"WinnerX\",\"WinnerO\"],\"Playback\":{\"m\":[{\"frames\":{\"n\":\"List\",\"p\":\"Frame\"}},{\"x\":\"UserId\"},{\"o\":\"UserId\"},{\"result\":\"Result\"}]},\"PostStart\":{\"o\":\"Init\"},\"PostMove\":{\"m\":[{\"loc\":\"Loc\"},{\"gameId\":\"GameId\"}],\"o\":\"State\"},\"GetPlayback\":{\"m\":[{\"gameId\":\"GameId\"}],\"o\":\"Playback\"}},\"version\":{\"major\":0,\"minor\":0}}"

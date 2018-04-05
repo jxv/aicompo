@@ -96,6 +96,43 @@
         }
       ]
     },
+    "Frame": {
+      "m": [
+        {
+          "board": "Board"
+        },
+        {
+          "loc": "Loc"
+        },
+        {
+          "player": "Player"
+        }
+      ]
+    },
+    "Result": [
+      "Tie",
+      "WinnerX",
+      "WinnerO"
+    ],
+    "Playback": {
+      "m": [
+        {
+          "frames": {
+            "n": "List",
+            "p": "Frame"
+          }
+        },
+        {
+          "x": "UserId"
+        },
+        {
+          "o": "UserId"
+        },
+        {
+          "result": "Result"
+        }
+      ]
+    },
     "PostStart": {
       "o": "Init"
     },
@@ -109,6 +146,14 @@
         }
       ],
       "o": "State"
+    },
+    "GetPlayback": {
+      "m": [
+        {
+          "gameId": "GameId"
+        }
+      ],
+      "o": "Playback"
     }
   }
 }

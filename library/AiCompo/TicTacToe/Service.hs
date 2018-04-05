@@ -57,14 +57,14 @@ data TUser = TUser
 --
 
 type Step = TL.Step G.State G.Final
-type Result = TL.Result GameId G.Player UserId G.State ()
+type Result = TL.Result GameId G.Player UserId G.State G.FinalResult
 type Starter = TL.Starter GameId G.Player UserId
 type Lobby = TL.Lobby GameId G.Player UserId IO
 type Session = TL.Session G.Loc G.State G.Final
 type Sessions = TL.Sessions GameId UserId G.Player G.Loc G.State G.Final IO
 type SessionEntry = TL.SessionEntry G.Player G.Loc G.State G.Final IO
 type Registry = TL.Registry UserId TUser IO
-type Results = TL.Results GameId G.Player UserId G.State () IO
+type Results = TL.Results GameId G.Player UserId G.State G.FinalResult IO
 type LabeledSession = TL.LabeledSession UserId G.Loc G.State G.Final
 
 data Components = Components
@@ -98,25 +98,6 @@ postStart components userId = do
           userIdO = T0.UserId (toText $ sUserIds G.Player'O)
       return $ T0.Init gameId users (gameStepToApiState step)
 
-gameFinalToApiFinal :: G.Final -> T0.Final
-gameFinalToApiFinal = \case
-  G.Final'Won -> T0.Final'Won
-  G.Final'Loss -> T0.Final'Loss
-  G.Final'Tied -> T0.Final'Tied
-
-gameBoardToApiBoard :: G.Board -> T0.Board
-gameBoardToApiBoard b = T0.Board [ [ toPlayer <$> Map.lookup (G.Loc x y) (G.bCells b) | x <- [0..2]] | y <- [0..2] ]
-  where
-    toPlayer :: G.Player -> T0.Player
-    toPlayer = \case
-      G.Player'X -> T0.Player'X
-      G.Player'O -> T0.Player'O
-
-gameStepToApiState :: Step -> T0.State
-gameStepToApiState (TL.Step st terminal) = T0.State
-  (gameBoardToApiBoard $ G.sBoard st)
-  (gameFinalToApiFinal <$> terminal)
-
 postMove :: (MonadIO m, T0.TicTacToe'Thrower m) => Components -> UserId -> T0.PostMove -> m T0.State
 postMove components userId (T0.PostMove loc gameId) = do
   let sessionId = GameId (toText gameId)
@@ -133,10 +114,60 @@ postMove components userId (T0.PostMove loc gameId) = do
           step <- liftIO $ readChan (TL.sStep session)
           return (gameStepToApiState step)
 
+getPlayback :: (MonadIO m, T0.TicTacToe'Thrower m) => Components -> UserId -> T0.GetPlayback -> m T0.Playback
+getPlayback components _userId (T0.GetPlayback gameId) = do
+  let sessionId = GameId (toText gameId)
+  result' <- liftIO $ TL.rFindResult (cResults components) sessionId
+  case result' of
+    Nothing -> T0.ticTacToe'throw T0.Error'GameId
+    Just result -> do
+      let userIds p = T0.UserId . toText $ TL.sUserIds (TL.rStarter result) p
+      let x = userIds G.Player'X
+      let o = userIds G.Player'O
+      let frames = map gameFrameToApiFrame (G.sFrames $ TL.rState result)
+      let apiResult = gameFinalResultToApiResult $ TL.rExtra result
+      return $ T0.Playback frames x o apiResult
+
+--
+
 unrep :: [player] -> (session -> UserId) -> (player -> session) -> UserId -> Maybe session
 unrep players sessionToUserId rep userId = List.foldl' (<|>) Nothing $ map
   (\p -> if userId == sessionToUserId (rep p) then Just (rep p) else Nothing)
   players
+
+gameFrameToApiFrame :: (G.Board, G.Action) -> T0.Frame
+gameFrameToApiFrame (board, action) = T0.Frame
+  (gameBoardToApiBoard board)
+  (gameLocToApiLoc $ G.actLoc action)
+  (gamePlayerToApiPlayer $ G.actPlayer action)
+
+gameFinalToApiFinal :: G.Final -> T0.Final
+gameFinalToApiFinal = \case
+  G.Final'Won -> T0.Final'Won
+  G.Final'Loss -> T0.Final'Loss
+  G.Final'Tied -> T0.Final'Tied
+
+gameBoardToApiBoard :: G.Board -> T0.Board
+gameBoardToApiBoard b = T0.Board [ [ gamePlayerToApiPlayer <$> Map.lookup (G.Loc x y) (G.bCells b) | x <- [0..2]] | y <- [0..2] ]
+
+gamePlayerToApiPlayer :: G.Player -> T0.Player
+gamePlayerToApiPlayer = \case
+  G.Player'X -> T0.Player'X
+  G.Player'O -> T0.Player'O
+
+gameStepToApiState :: Step -> T0.State
+gameStepToApiState (TL.Step st terminal) = T0.State
+  (gameBoardToApiBoard $ G.sBoard st)
+  (gameFinalToApiFinal <$> terminal)
+
+gameFinalResultToApiResult :: G.FinalResult -> T0.Result
+gameFinalResultToApiResult = \case
+  G.FinalResult'Tie -> T0.Result'Tie
+  G.FinalResult'Winner G.Player'X -> T0.Result'WinnerX
+  G.FinalResult'Winner G.Player'O -> T0.Result'WinnerO
+
+gameLocToApiLoc :: G.Loc -> T0.Loc
+gameLocToApiLoc loc = T0.Loc (G.locX loc) (G.locY loc)
 
 --
 
@@ -176,23 +207,35 @@ dispatcher dispatchSession lobby sessions = forever $ do
         Just userId -> return userId
 
 sessionWorker :: Sessions -> Results -> Starter -> IO SessionEntry
-sessionWorker _sessions _results TL.Starter{} = do
+sessionWorker sessions results starter = do
   sessionX <- TL.newSessionWithChan
   sessionO <- TL.newSessionWithChan
 
   threadId <- forkIO . forever $ do
-    runGame G.game (\case G.Player'X -> sessionX; G.Player'O -> sessionO, G.newState)
+    let config = GameConfig
+          starter
+          (\case G.Player'X -> sessionX; G.Player'O -> sessionO)
+          sessions
+          results
+    runGame G.game (config, G.newState)
 
   let thread = TL.Thread threadId (killThread threadId)
   return $ TL.SessionEntry thread $ \case G.Player'X -> sessionX; G.Player'O -> sessionO
 
 --
 
-newtype Game a = Game (ReaderT (G.Player -> Session) (StateT G.State IO) a)
-  deriving (Functor, Applicative, Monad, MonadReader (G.Player -> Session), MonadState G.State, MonadIO)
+newtype Game a = Game (ReaderT GameConfig (StateT G.State IO) a)
+  deriving (Functor, Applicative, Monad, MonadReader GameConfig, MonadState G.State, MonadIO)
 
-runGame :: Game a -> (G.Player -> Session, G.State) -> IO a
-runGame (Game m) (getSession, st) = evalStateT (runReaderT m getSession) st
+data GameConfig = GameConfig
+  { gcStarter :: Starter
+  , gcGetSession :: G.Player -> Session
+  , gcSessions :: Sessions
+  , gcResults :: Results
+  }
+
+runGame :: Game a -> (GameConfig, G.State) -> IO a
+runGame (Game m) (config, st) = evalStateT (runReaderT m config) st
 
 instance G.Play Game where
   initiate = initiate'
@@ -214,49 +257,52 @@ instance G.HasBoard Game where
   getBoard = gets G.sBoard
   putBoard b = modify $ \s -> s { G.sBoard = b }
 
-initiate' :: (MonadIO m, MonadReader (G.Player -> Session) m, MonadState G.State m) => G.Player -> m ()
+initiate' :: (MonadIO m, MonadReader GameConfig m, MonadState G.State m) => G.Player -> m ()
 initiate' player = do
   st <- get
-  getSession <- ask
-  liftIO $ writeChan (TL.sStep $ getSession player) (TL.Step st Nothing)
+  gc <- ask
+  liftIO $ writeChan (TL.sStep $ gcGetSession gc player) (TL.Step st Nothing)
 
-move' :: (MonadIO m, MonadReader (G.Player -> Session) m, MonadState G.State m) => G.Player -> m G.Loc
+move' :: (MonadIO m, MonadReader GameConfig m, MonadState G.State m) => G.Player -> m G.Loc
 move' player = do
-  chan <- asks (\getSession -> TL.sInput $ getSession player)
+  chan <- asks (\gc -> TL.sInput $ gcGetSession gc player)
   liftIO $ readChan chan
 
-end' :: (MonadIO m, MonadReader (G.Player -> Session) m, MonadState G.State m) => G.Win G.Player -> G.Lose G.Player -> m ()
+end' :: (MonadIO m, MonadReader GameConfig m, MonadState G.State m) => G.Win G.Player -> G.Lose G.Player -> m ()
 end' (G.Win w) (G.Lose l) = do
   st <- get
-  getSession <- ask
-  liftIO $ writeChan (TL.sStep $ getSession w) (TL.Step st (Just G.Final'Won))
-  liftIO $ writeChan (TL.sStep $ getSession l) (TL.Step st (Just G.Final'Loss))
+  gc <- ask
+  liftIO $ writeChan (TL.sStep $ gcGetSession gc w) (TL.Step st (Just G.Final'Won))
+  liftIO $ writeChan (TL.sStep $ gcGetSession gc l) (TL.Step st (Just G.Final'Loss))
+  liftIO $ TL.rSaveResult (gcResults gc) $ TL.Result (gcStarter gc) st (G.FinalResult'Winner w)
 
-forfeit' :: (MonadIO m, MonadReader (G.Player -> Session) m, MonadState G.State m) => G.Win G.Player -> G.Lose G.Player -> m ()
+forfeit' :: (MonadIO m, MonadReader GameConfig m, MonadState G.State m) => G.Win G.Player -> G.Lose G.Player -> m ()
 forfeit' (G.Win w) (G.Lose l) = do
   st <- get
-  getSession <- ask
-  liftIO $ writeChan (TL.sStep $ getSession w) (TL.Step st (Just G.Final'Won))
-  liftIO $ writeChan (TL.sStep $ getSession l) (TL.Step st (Just G.Final'Loss))
+  gc <- ask
+  liftIO $ writeChan (TL.sStep $ gcGetSession gc w) (TL.Step st (Just G.Final'Won))
+  liftIO $ writeChan (TL.sStep $ gcGetSession gc l) (TL.Step st (Just G.Final'Loss))
+  liftIO $ TL.rSaveResult (gcResults gc) $ TL.Result (gcStarter gc) st (G.FinalResult'Winner w)
 
-tie' :: (MonadIO m, MonadReader (G.Player -> Session) m, MonadState G.State m) => m ()
+tie' :: (MonadIO m, MonadReader GameConfig m, MonadState G.State m) => m ()
 tie' = do
   st <- get
-  getSession <- ask
-  liftIO $ writeChan (TL.sStep $ getSession G.Player'X) (TL.Step st (Just G.Final'Tied))
-  liftIO $ writeChan (TL.sStep $ getSession G.Player'O) (TL.Step st (Just G.Final'Tied))
+  gc <- ask
+  liftIO $ writeChan (TL.sStep $ gcGetSession gc G.Player'X) (TL.Step st (Just G.Final'Tied))
+  liftIO $ writeChan (TL.sStep $ gcGetSession gc G.Player'O) (TL.Step st (Just G.Final'Tied))
+  liftIO $ TL.rSaveResult (gcResults gc) $ TL.Result (gcStarter gc) st (G.FinalResult'Tie)
 
-insertAtLoc' :: (MonadIO m, MonadReader (G.Player -> Session) m, MonadState G.State m) => G.Loc -> G.Player -> m ()
+insertAtLoc' :: (MonadIO m, MonadReader GameConfig m, MonadState G.State m) => G.Loc -> G.Player -> m ()
 insertAtLoc' loc player = do
   st <- get
   let board' = G.insertPlayer loc player (G.sBoard st)
-  let st' = G.State board' ((board', G.Action player loc) : G.sFrames st)
+  let st' = G.State board' (G.sFrames st ++ [(board', G.Action player loc)])
   put st'
 
-endTurn' :: (MonadIO m, MonadReader (G.Player -> Session) m, MonadState G.State m) => G.Player -> m ()
+endTurn' :: (MonadIO m, MonadReader GameConfig m, MonadState G.State m) => G.Player -> m ()
 endTurn' player = do
   st <- get
   let step = TL.Step st Nothing
   let opponent = G.getOpponent player
-  chan <- asks (\getSession -> TL.sStep $ getSession opponent)
+  chan <- asks (\gc -> TL.sStep $ gcGetSession gc opponent)
   liftIO $ writeChan chan step

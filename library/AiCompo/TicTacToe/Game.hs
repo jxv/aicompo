@@ -27,9 +27,13 @@ data Board = Board
   } deriving (Show, Eq)
 
 data Result
-  = Unfinished
-  | Tie
-  | Winner Player
+  = Result'Unfinished
+  | Result'Final FinalResult
+  deriving (Show, Eq)
+
+data FinalResult
+  = FinalResult'Tie
+  | FinalResult'Winner Player
   deriving (Show, Eq)
 
 data State = State
@@ -72,11 +76,11 @@ play' p0 p1 = do
       insertAtLoc loc p0
       res <- getResult
       case res of
-        Unfinished -> do
+        Result'Unfinished -> do
           endTurn p0
           play p1 p0
-        Winner _ -> end (Win p0) (Lose p1)
-        Tie -> tie
+        Result'Final FinalResult'Tie -> tie
+        Result'Final (FinalResult'Winner _) -> end (Win p0) (Lose p1)
     else forfeit (Win p1) (Lose p0)
 
 class Monad m => Interact m where
@@ -122,10 +126,10 @@ getResult' = do
   where
     result :: Board -> Result
     result b
-      | isWinner Player'X b = Winner Player'X
-      | isWinner Player'O b = Winner Player'O
-      | Map.size (bCells b) == (bSize b) ^ (2 :: Int) = Tie
-      | otherwise = Unfinished
+      | isWinner Player'X b = Result'Final $ FinalResult'Winner Player'X
+      | isWinner Player'O b = Result'Final $ FinalResult'Winner Player'O
+      | Map.size (bCells b) == (bSize b) ^ (2 :: Int) = Result'Final FinalResult'Tie
+      | otherwise = Result'Unfinished
     isWinner :: Player -> Board -> Bool
     isWinner p b =
       or [all has [Loc x y | y <- q] | x <- q] ||

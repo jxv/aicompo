@@ -35,3 +35,4 @@ instance V0.TicTacToe'Thrower Handler
 instance V0.TicTacToe'Service TS.UserId Handler where
   ticTacToe'PostStart meta = asks appTicTacToeComponents >>= (\t -> TS.postStart t meta)
   ticTacToe'PostMove meta req = asks appTicTacToeComponents >>= (\t -> TS.postMove t meta req)
+  ticTacToe'GetPlayback meta req = asks appTicTacToeComponents >>= (\t -> TS.getPlayback t meta req)
