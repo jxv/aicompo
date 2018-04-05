@@ -1,30 +1,30 @@
 <h1>
   Developer API
 <br />
-  $maybe appData <- mAppData
+  $maybe botData <- mBotData
     <h2>
-      Apps
+      Bots
     <br />
     <br />
     <table .table .table-striped>
       <tbody>
-        $forall (appId,appName,apiKeys) <- appData
+        $forall (botId,botName,apiKeys) <- botData
           <tr>
             <td>
               <br />
               <br />
               <div>
-                <b>App Name:&nbsp;
+                <b>Bot Name:&nbsp;
                 <span .key-code>
-                  #{appName}
+                  #{botName}
               <div>
-                <b>App Id:&nbsp;
+                <b>Bot Id:&nbsp;
                 <span .key-code>
-                  #{appId}
+                  #{botId}
               <br />
-              <form action=@{AppEntityDeleteR appId} method=post>
+              <form action=@{BotEntityDeleteR botId} method=post>
                 <button type=submit .btn-sm .btn-danger>
-                  Delete App
+                  Delete Bot
               <div>
                 $forall apiKey <- apiKeys
                   <br />
@@ -34,21 +34,21 @@
                     <span .key-code>
                       #{apiKey}
                   <br />
-                  <form action=@{ApiKeyEntityDeleteR appId apiKey} method=post>
+                  <form action=@{ApiKeyEntityDeleteR botId apiKey} method=post>
                     <button type=submit .btn-xs .btn-danger>
                       Delete API Key
               $if (length apiKeys < 2)
                 <br />
-                <form action=@{ApiKeyR appId} method=post>
+                <form action=@{ApiKeyR botId} method=post>
                   <button type=submit .btn-sm .btn-primary>
                     Add API Key
               <br />
               <br />
     <br />
-    <form action=@{AppR} method=post enctype=#{appFormEnctype}>
-      ^{appFormWidget}
+    <form action=@{BotR} method=post enctype=#{botFormEnctype}>
+      ^{botFormWidget}
       <button type=submit .btn-sm .btn-primary>
-        Add App
+        Add Bot
     <br />
     <hr />
 

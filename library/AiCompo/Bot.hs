@@ -1,4 +1,4 @@
-module App.ApiKey where
+module AiCompo.Bot where
 
 import Data.Time
 import Control.Monad.Persist
@@ -7,24 +7,24 @@ import qualified DB
 import Import (Handler, Text, liftIO)
 import Util
 
-generateAppPublic :: IO Text
-generateAppPublic = generateText64 48
+generateBotPublic :: IO Text
+generateBotPublic = generateText64 48
 
 generateApiKey :: IO Text
 generateApiKey = generateText64 80
 
-insertApp :: Text -> Text -> Handler ()
-insertApp userPublic appName = do
+insertBot :: Text -> Text -> Handler ()
+insertBot userPublic botName = do
   now <- liftIO getCurrentTime
-  appPublic <- liftIO generateAppPublic
-  insert_ (DB.App now appPublic appName)
-  insert_ (DB.UserXApp now userPublic appPublic)
+  botPublic <- liftIO generateBotPublic
+  insert_ (DB.Bot now botPublic botName)
+  insert_ (DB.UserXBot now userPublic botPublic)
 
 insertApiKey :: Text -> Handler ()
-insertApiKey appPublic = do
+insertApiKey botPublic = do
   now <- liftIO getCurrentTime
   apiKey <- liftIO generateApiKey
-  insert_ (DB.ApiKey now appPublic apiKey)
+  insert_ (DB.ApiKey now botPublic apiKey)
 
 secondsToNominalDiffTime :: Integer -> NominalDiffTime
 secondsToNominalDiffTime = fromInteger

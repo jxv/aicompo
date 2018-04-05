@@ -11,27 +11,27 @@ import qualified DB
 import Util
 import HandlerUtil
 
-data AppForm = AppForm
-  { appFormName :: Text
+data BotForm = BotForm
+  { botFormName :: Text
   }
 
 getDeveloperR :: Handler Html
 getDeveloperR = do
-  (appFormWidget, appFormEnctype) <- generateFormPost appForm
-  mAppData <- runMaybeT $ do
+  (botFormWidget, botFormEnctype) <- generateFormPost botForm
+  mBotData <- runMaybeT $ do
     userId <- MaybeT getAuthUserPublic
-    userXApps <- lift $ selectList [exact DB.UserXAppUser userId] []
-    let appPublics = map (DB.userXAppApp . entityVal) userXApps
-    apps <- lift $ mapM (\appPublic -> selectList [exact DB.AppPublic appPublic] []) appPublics
-    flip mapM (concat apps) $ \(Entity _ app) -> do
-      apiKeys <- lift $ selectList [exact DB.ApiKeyApp (DB.appPublic app)] []
-      return (DB.appPublic app, DB.appName app, map (DB.apiKeyKey . entityVal) apiKeys)
+    userXBots <- lift $ selectList [exact DB.UserXBotUser userId] []
+    let botPublics = map (DB.userXBotBot . entityVal) userXBots
+    bots <- lift $ mapM (\botPublic -> selectList [exact DB.BotPublic botPublic] []) botPublics
+    flip mapM (concat bots) $ \(Entity _ bot) -> do
+      apiKeys <- lift $ selectList [exact DB.ApiKeyBot (DB.botPublic bot)] []
+      return (DB.botPublic bot, DB.botName bot, map (DB.apiKeyKey . entityVal) apiKeys)
   defaultLayout $ do
     setTitle "AI {COMPO}"
     $(widgetFile "developer")
 
-appForm :: Form AppForm
-appForm = renderBootstrap3 BootstrapBasicForm $ AppForm
+botForm :: Form BotForm
+botForm = renderBootstrap3 BootstrapBasicForm $ BotForm
     <$> areq textField textSettings Nothing
     where textSettings = FieldSettings
             { fsLabel = ""
@@ -40,6 +40,6 @@ appForm = renderBootstrap3 BootstrapBasicForm $ AppForm
             , fsName = Nothing
             , fsAttrs =
                 [ ("class", "form-control app-form-name")
-                , ("placeholder", "App Name")
+                , ("placeholder", "Bot Name")
                 ]
             }

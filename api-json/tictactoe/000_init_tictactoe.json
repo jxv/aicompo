@@ -9,12 +9,22 @@
     "host": "aicompo.net",
     "port": 80,
     "path": "/api/tictactoe",
-    "meta": "AccessToken",
+    "meta": "Meta",
     "error": "Error"
   },
   "schema": {
-    "AccessToken": "String",
-    "UserId": "String",
+    "Meta": {
+      "m": [
+        {
+          "apiKey": {
+            "n": "Option",
+            "p": "ApiKey"
+          }
+        }
+      ]
+    },
+    "ApiKey": "String",
+    "BotId": "String",
     "Group": "String",
     "GameId": "String",
     "GameToken": "String",
@@ -23,7 +33,6 @@
       "O"
     ],
     "Error": [
-      "AccessToken",
       "GameId",
       "Unauthorized",
       "MoveLoc",
@@ -73,13 +82,13 @@
         }
       ]
     },
-    "Users": {
+    "Bots": {
       "m": [
         {
-          "x": "UserId"
+          "x": "BotId"
         },
         {
-          "o": "UserId"
+          "o": "BotId"
         }
       ]
     },
@@ -89,7 +98,7 @@
           "gameId": "GameId"
         },
         {
-          "users": "Users"
+          "users": "Bots"
         },
         {
           "state": "State"
@@ -123,10 +132,10 @@
           }
         },
         {
-          "x": "UserId"
+          "x": "BotId"
         },
         {
-          "o": "UserId"
+          "o": "BotId"
         },
         {
           "result": "Result"

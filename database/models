@@ -15,22 +15,22 @@ UserXGithub
   UniqueUserXGithubGithub github
   deriving Show
 
-App
+Bot
   created UTCTime
   public Text
   name Text
-  UniqueAppPublic public
+  UniqueBotPublic public
   deriving Show
 
-UserXApp
+UserXBot
   created UTCTime
   user Text
-  app Text
+  bot Text
   deriving Show
 
 ApiKey
   created UTCTime
-  app Text
+  bot Text
   key Text
   UniqueApiKeyKey key
   deriving Show

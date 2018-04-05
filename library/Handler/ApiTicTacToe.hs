@@ -27,12 +27,14 @@ postApiTicTacToeR = do
         ()
   runFluid handlerMap v
 
-ticTacToeMetaMiddleware0 :: V0.AccessToken -> Handler TS.UserId
-ticTacToeMetaMiddleware0 (V0.AccessToken accessToken') = return $ TS.UserId accessToken'
+ticTacToeMetaMiddleware0 :: V0.Meta -> Handler (Maybe TS.BotId)
+ticTacToeMetaMiddleware0 (V0.Meta Nothing) = return Nothing
+ticTacToeMetaMiddleware0 (V0.Meta (Just (V0.ApiKey apiKey))) = do
+  return Nothing
 
 instance V0.TicTacToe'Thrower Handler
 
-instance V0.TicTacToe'Service TS.UserId Handler where
+instance V0.TicTacToe'Service (Maybe TS.BotId) Handler where
   ticTacToe'PostStart meta = asks appTicTacToeComponents >>= (\t -> TS.postStart t meta)
   ticTacToe'PostMove meta req = asks appTicTacToeComponents >>= (\t -> TS.postMove t meta req)
   ticTacToe'GetPlayback meta req = asks appTicTacToeComponents >>= (\t -> TS.getPlayback t meta req)

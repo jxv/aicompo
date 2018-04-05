@@ -5,19 +5,19 @@ import Control.Monad.Persist
 
 import qualified DB
 import Import hiding (selectFirst)
-import App.ApiKey
+import AiCompo.Bot
 import HandlerUtil
 import Util
 
 postApiKeyR :: Text -> Handler Html
-postApiKeyR appPublic = do
+postApiKeyR botPublic = do
   muser <- getAuthUserPublic
   case muser of
     Nothing -> notAuthenticated
     Just userId -> do
-      muserxapp <- selectFirst [exact DB.UserXAppUser userId, exact DB.UserXAppApp appPublic] []
+      muserxapp <- selectFirst [exact DB.UserXBotUser userId, exact DB.UserXBotBot botPublic] []
       case muserxapp of
         Nothing -> permissionDenied "Unauthorized"
         Just _ -> do
-          insertApiKey appPublic
+          insertApiKey botPublic
   redirect DeveloperR

@@ -15,15 +15,16 @@
 module AiCompo.TicTacToe.Api.Server
   ( ticTacToe'handlerMap
   , ticTacToe'spec
-  , V0.AccessToken(..)
-  , V0.UserId(..)
+  , V0.ApiKey(..)
+  , V0.BotId(..)
   , V0.Group(..)
   , V0.GameId(..)
   , V0.GameToken(..)
+  , V0.Meta(..)
   , V0.Board(..)
   , V0.Loc(..)
   , V0.State(..)
-  , V0.Users(..)
+  , V0.Bots(..)
   , V0.Init(..)
   , V0.Frame(..)
   , V0.Playback(..)
@@ -48,15 +49,16 @@ import qualified AiCompo.TicTacToe.Api.Major0 as V0
   , ticTacToe'version
   , ticTacToe'pull
   , ticTacToe'spec
-  , AccessToken(..)
-  , UserId(..)
+  , ApiKey(..)
+  , BotId(..)
   , Group(..)
   , GameId(..)
   , GameToken(..)
+  , Meta(..)
   , Board(..)
   , Loc(..)
   , State(..)
-  , Users(..)
+  , Bots(..)
   , Init(..)
   , Frame(..)
   , Playback(..)
@@ -74,7 +76,7 @@ ticTacToe'handlerMap
     , R.MonadCatch m
     , V0.TicTacToe'Service meta0 m
     )
-  => (xtra -> C.Hooks m V0.AccessToken meta0)
+  => (xtra -> C.Hooks m V0.Meta meta0)
   -> xtra
   -> R.Map C.Major (C.Minor, C.Request -> m (P.Either C.Response C.Response))
 ticTacToe'handlerMap hooks0 xtra = R.fromList

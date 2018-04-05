@@ -18,7 +18,6 @@ gen_api() {
   fluid -l haskell -s api-json/$1 -m AiCompo.$2.Api -n Api -d ./library/AiCompo/$2 -e server
 }
 
-gen_api "authentication" "Authentication"
 gen_api "tictactoe" "TicTacToe"
 
 # fluid -l haskell -s api-json/tictactoe -m CompoAi.Api.TicTacToe -n TicTacToe -d ./src/CompoAi/Api -e client -a http-client

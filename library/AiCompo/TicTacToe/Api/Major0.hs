@@ -19,15 +19,16 @@ module AiCompo.TicTacToe.Api.Major0
   , ticTacToe'spec
   , TicTacToe'Thrower(..)
   , TicTacToe'Service(..)
-  , AccessToken(..)
-  , UserId(..)
+  , ApiKey(..)
+  , BotId(..)
   , Group(..)
   , GameId(..)
   , GameToken(..)
+  , Meta(..)
   , Board(..)
   , Loc(..)
   , State(..)
-  , Users(..)
+  , Bots(..)
   , Init(..)
   , Frame(..)
   , Playback(..)
@@ -83,12 +84,12 @@ instance TicTacToe'Service meta m => TicTacToe'Service meta (M.ExceptT C.Respons
 -- Types
 --------------------------------------------------------
 
--- Wrap: AccessToken
-newtype AccessToken = AccessToken R.Text
+-- Wrap: ApiKey
+newtype ApiKey = ApiKey R.Text
   deriving (P.Eq, P.Ord, P.IsString, R.ToText, P.Show)
 
--- Wrap: UserId
-newtype UserId = UserId R.Text
+-- Wrap: BotId
+newtype BotId = BotId R.Text
   deriving (P.Eq, P.Ord, P.IsString, R.ToText, P.Show)
 
 -- Wrap: Group
@@ -102,6 +103,11 @@ newtype GameId = GameId R.Text
 -- Wrap: GameToken
 newtype GameToken = GameToken R.Text
   deriving (P.Eq, P.Ord, P.IsString, R.ToText, P.Show)
+
+-- Struct: Meta
+data Meta = Meta
+  { metaApiKey :: (P.Maybe ApiKey)
+  } deriving (P.Show, P.Eq)
 
 -- Struct: Board
 data Board = Board
@@ -120,16 +126,16 @@ data State = State
   , stateFinal :: (P.Maybe Final)
   } deriving (P.Show, P.Eq)
 
--- Struct: Users
-data Users = Users
-  { usersX :: UserId
-  , usersO :: UserId
+-- Struct: Bots
+data Bots = Bots
+  { botsX :: BotId
+  , botsO :: BotId
   } deriving (P.Show, P.Eq)
 
 -- Struct: Init
 data Init = Init
   { initGameId :: GameId
-  , initUsers :: Users
+  , initUsers :: Bots
   , initState :: State
   } deriving (P.Show, P.Eq)
 
@@ -143,8 +149,8 @@ data Frame = Frame
 -- Struct: Playback
 data Playback = Playback
   { playbackFrames :: [Frame]
-  , playbackX :: UserId
-  , playbackO :: UserId
+  , playbackX :: BotId
+  , playbackO :: BotId
   , playbackResult :: Result
   } deriving (P.Show, P.Eq)
 
@@ -167,8 +173,7 @@ data Player
 
 -- Enumeration: Error
 data Error
-  = Error'AccessToken
-  | Error'GameId
+  = Error'GameId
   | Error'Unauthorized
   | Error'MoveLoc
   | Error'Timeout
@@ -199,7 +204,7 @@ data Result
 -- Handler
 ticTacToe'handler
   :: (TicTacToe'Service meta m, R.MonadIO m, R.MonadCatch m)
-  => (xtra -> C.Hooks m AccessToken meta)
+  => (xtra -> C.Hooks m Meta meta)
   -> xtra
   -> C.Request
   -> m (P.Either C.Response C.Response)
@@ -265,32 +270,32 @@ data TicTacToe'Api
 -- Type Instances
 --------------------------------------------------------
 
-instance C.ToVal AccessToken where
-  toVal (AccessToken _w) = C.toVal _w
+instance C.ToVal ApiKey where
+  toVal (ApiKey _w) = C.toVal _w
 
-instance C.FromVal AccessToken where
-  fromVal _v = AccessToken P.<$> C.fromVal _v
+instance C.FromVal ApiKey where
+  fromVal _v = ApiKey P.<$> C.fromVal _v
 
-instance R.ToJSON AccessToken where
+instance R.ToJSON ApiKey where
   toJSON = R.toJSON P.. C.toVal
 
-instance R.FromJSON AccessToken where
+instance R.FromJSON ApiKey where
   parseJSON _v = do
     _x <- R.parseJSON _v
     case C.fromVal _x of
       P.Nothing -> P.mzero
       P.Just _y -> P.return _y
 
-instance C.ToVal UserId where
-  toVal (UserId _w) = C.toVal _w
+instance C.ToVal BotId where
+  toVal (BotId _w) = C.toVal _w
 
-instance C.FromVal UserId where
-  fromVal _v = UserId P.<$> C.fromVal _v
+instance C.FromVal BotId where
+  fromVal _v = BotId P.<$> C.fromVal _v
 
-instance R.ToJSON UserId where
+instance R.ToJSON BotId where
   toJSON = R.toJSON P.. C.toVal
 
-instance R.FromJSON UserId where
+instance R.FromJSON BotId where
   parseJSON _v = do
     _x <- R.parseJSON _v
     case C.fromVal _x of
@@ -339,6 +344,29 @@ instance R.ToJSON GameToken where
   toJSON = R.toJSON P.. C.toVal
 
 instance R.FromJSON GameToken where
+  parseJSON _v = do
+    _x <- R.parseJSON _v
+    case C.fromVal _x of
+      P.Nothing -> P.mzero
+      P.Just _y -> P.return _y
+
+instance C.ToVal Meta where
+  toVal Meta
+    { metaApiKey
+    } = C.Val'ApiVal P.$ C.ApiVal'Struct P.$ C.Struct P.$ R.fromList
+    [ ("apiKey", C.toVal metaApiKey)
+    ]
+
+instance C.FromVal Meta where
+  fromVal = \case
+    C.Val'ApiVal (C.ApiVal'Struct (C.Struct _m)) -> Meta
+      P.<$> C.getMember _m "apiKey"
+    _ -> P.Nothing
+
+instance R.ToJSON Meta where
+  toJSON = R.toJSON P.. C.toVal
+
+instance R.FromJSON Meta where
   parseJSON _v = do
     _x <- R.parseJSON _v
     case C.fromVal _x of
@@ -420,26 +448,26 @@ instance R.FromJSON State where
       P.Nothing -> P.mzero
       P.Just _y -> P.return _y
 
-instance C.ToVal Users where
-  toVal Users
-    { usersX
-    , usersO
+instance C.ToVal Bots where
+  toVal Bots
+    { botsX
+    , botsO
     } = C.Val'ApiVal P.$ C.ApiVal'Struct P.$ C.Struct P.$ R.fromList
-    [ ("x", C.toVal usersX)
-    , ("o", C.toVal usersO)
+    [ ("x", C.toVal botsX)
+    , ("o", C.toVal botsO)
     ]
 
-instance C.FromVal Users where
+instance C.FromVal Bots where
   fromVal = \case
-    C.Val'ApiVal (C.ApiVal'Struct (C.Struct _m)) -> Users
+    C.Val'ApiVal (C.ApiVal'Struct (C.Struct _m)) -> Bots
       P.<$> C.getMember _m "x"
       P.<*> C.getMember _m "o"
     _ -> P.Nothing
 
-instance R.ToJSON Users where
+instance R.ToJSON Bots where
   toJSON = R.toJSON P.. C.toVal
 
-instance R.FromJSON Users where
+instance R.FromJSON Bots where
   parseJSON _v = do
     _x <- R.parseJSON _v
     case C.fromVal _x of
@@ -610,7 +638,6 @@ instance R.FromJSON Player where
 
 instance C.ToVal Error where
   toVal = \case
-    Error'AccessToken -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "AccessToken" P.Nothing
     Error'GameId -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "GameId" P.Nothing
     Error'Unauthorized -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "Unauthorized" P.Nothing
     Error'MoveLoc -> C.Val'ApiVal P.$ C.ApiVal'Enumeral P.$ C.Enumeral "MoveLoc" P.Nothing
@@ -619,7 +646,6 @@ instance C.ToVal Error where
 instance C.FromVal Error where
   fromVal = \case
     C.Val'ApiVal (C.ApiVal'Enumeral (C.Enumeral _tag _m)) -> case (_tag,_m) of
-      ("AccessToken", P.Nothing) -> P.Just Error'AccessToken
       ("GameId", P.Nothing) -> P.Just Error'GameId
       ("Unauthorized", P.Nothing) -> P.Just Error'Unauthorized
       ("MoveLoc", P.Nothing) -> P.Just Error'MoveLoc
@@ -693,4 +719,4 @@ instance R.FromJSON Result where
 
 ticTacToe'spec :: R.Value
 ticTacToe'spec = v
-  where P.Just v = R.decode "{\"fluid\":{\"major\":0,\"minor\":0},\"pull\":{\"protocol\":\"https\",\"name\":\"TicTacToe\",\"host\":\"aicompo.net\",\"port\":80,\"path\":\"/api/tictactoe\",\"meta\":\"AccessToken\",\"error\":\"Error\"},\"schema\":{\"AccessToken\":\"String\",\"UserId\":\"String\",\"Group\":\"String\",\"GameId\":\"String\",\"GameToken\":\"String\",\"Player\":[\"X\",\"O\"],\"Error\":[\"AccessToken\",\"GameId\",\"Unauthorized\",\"MoveLoc\",\"Timeout\"],\"Board\":{\"m\":[{\"cells\":{\"n\":\"List\",\"p\":{\"n\":\"List\",\"p\":{\"n\":\"Option\",\"p\":\"Player\"}}}}]},\"Final\":[\"Won\",\"Loss\",\"Tied\"],\"Loc\":{\"m\":[{\"x\":\"Int\"},{\"y\":\"Int\"}]},\"State\":{\"m\":[{\"board\":\"Board\"},{\"final\":{\"n\":\"Option\",\"p\":\"Final\"}}]},\"Users\":{\"m\":[{\"x\":\"UserId\"},{\"o\":\"UserId\"}]},\"Init\":{\"m\":[{\"gameId\":\"GameId\"},{\"users\":\"Users\"},{\"state\":\"State\"}]},\"Frame\":{\"m\":[{\"board\":\"Board\"},{\"loc\":\"Loc\"},{\"player\":\"Player\"}]},\"Result\":[\"Tie\",\"WinnerX\",\"WinnerO\"],\"Playback\":{\"m\":[{\"frames\":{\"n\":\"List\",\"p\":\"Frame\"}},{\"x\":\"UserId\"},{\"o\":\"UserId\"},{\"result\":\"Result\"}]},\"PostStart\":{\"o\":\"Init\"},\"PostMove\":{\"m\":[{\"loc\":\"Loc\"},{\"gameId\":\"GameId\"}],\"o\":\"State\"},\"GetPlayback\":{\"m\":[{\"gameId\":\"GameId\"}],\"o\":\"Playback\"}},\"version\":{\"major\":0,\"minor\":0}}"
+  where P.Just v = R.decode "{\"fluid\":{\"major\":0,\"minor\":0},\"pull\":{\"protocol\":\"https\",\"name\":\"TicTacToe\",\"host\":\"aicompo.net\",\"port\":80,\"path\":\"/api/tictactoe\",\"meta\":\"Meta\",\"error\":\"Error\"},\"schema\":{\"Meta\":{\"m\":[{\"apiKey\":{\"n\":\"Option\",\"p\":\"ApiKey\"}}]},\"ApiKey\":\"String\",\"BotId\":\"String\",\"Group\":\"String\",\"GameId\":\"String\",\"GameToken\":\"String\",\"Player\":[\"X\",\"O\"],\"Error\":[\"GameId\",\"Unauthorized\",\"MoveLoc\",\"Timeout\"],\"Board\":{\"m\":[{\"cells\":{\"n\":\"List\",\"p\":{\"n\":\"List\",\"p\":{\"n\":\"Option\",\"p\":\"Player\"}}}}]},\"Final\":[\"Won\",\"Loss\",\"Tied\"],\"Loc\":{\"m\":[{\"x\":\"Int\"},{\"y\":\"Int\"}]},\"State\":{\"m\":[{\"board\":\"Board\"},{\"final\":{\"n\":\"Option\",\"p\":\"Final\"}}]},\"Bots\":{\"m\":[{\"x\":\"BotId\"},{\"o\":\"BotId\"}]},\"Init\":{\"m\":[{\"gameId\":\"GameId\"},{\"users\":\"Bots\"},{\"state\":\"State\"}]},\"Frame\":{\"m\":[{\"board\":\"Board\"},{\"loc\":\"Loc\"},{\"player\":\"Player\"}]},\"Result\":[\"Tie\",\"WinnerX\",\"WinnerO\"],\"Playback\":{\"m\":[{\"frames\":{\"n\":\"List\",\"p\":\"Frame\"}},{\"x\":\"BotId\"},{\"o\":\"BotId\"},{\"result\":\"Result\"}]},\"PostStart\":{\"o\":\"Init\"},\"PostMove\":{\"m\":[{\"loc\":\"Loc\"},{\"gameId\":\"GameId\"}],\"o\":\"State\"},\"GetPlayback\":{\"m\":[{\"gameId\":\"GameId\"}],\"o\":\"Playback\"}},\"version\":{\"major\":0,\"minor\":0}}"

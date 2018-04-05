@@ -164,8 +164,8 @@ instance Yesod App where
   isAuthorized (StaticR _) _ = return Authorized
   isAuthorized ApiTicTacToeR _ = return Authorized
   isAuthorized DeveloperR _ = return Authorized
-  isAuthorized AppR _ = return Authorized
-  isAuthorized (AppEntityDeleteR _) _ = return Authorized
+  isAuthorized BotR _ = return Authorized
+  isAuthorized (BotEntityDeleteR _) _ = return Authorized
   isAuthorized (ApiKeyR _) _ = return Authorized
   isAuthorized (ApiKeyEntityDeleteR _ _) _ = return Authorized
   isAuthorized SpaR _ = return Authorized

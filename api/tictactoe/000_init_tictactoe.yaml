@@ -8,17 +8,19 @@ pull:
   host: aicompo.net
   port: 80
   path: /api/tictactoe
-  meta: AccessToken
+  meta: Meta
   error: Error
 
 schema:
-  AccessToken: String
-  UserId: String
+  Meta:
+    m: [apiKey: {n: Option, p: ApiKey}]
+  ApiKey: String
+  BotId: String
   Group: String
   GameId: String
   GameToken: String
   Player: [X, O]
-  Error: [AccessToken, GameId, Unauthorized, MoveLoc, Timeout]
+  Error: [GameId, Unauthorized, MoveLoc, Timeout]
 
   Board:
     m: [cells: {n: List, p: {n: List, p: {n: Option, p: Player}}}]
@@ -31,11 +33,11 @@ schema:
   State:
     m: [board: Board, final: {n: Option, p: Final}]
 
-  Users:
-    m: [x: UserId, o: UserId]
+  Bots:
+    m: [x: BotId, o: BotId]
 
   Init:
-    m: [gameId: GameId, users: Users, state: State]
+    m: [gameId: GameId, users: Bots, state: State]
 
   Frame:
     m: [board: Board, loc: Loc, player: Player]
@@ -43,7 +45,7 @@ schema:
   Result: [Tie, WinnerX, WinnerO]
 
   Playback:
-    m: [frames: {n: List, p: Frame}, x: UserId, o: UserId, result: Result]
+    m: [frames: {n: List, p: Frame}, x: BotId, o: BotId, result: Result]
 
   PostStart:
     o: Init

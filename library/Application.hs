@@ -42,8 +42,8 @@ import Handler.ApiKey
 import Handler.ApiKeyEntity
 import Handler.Spa
 import Handler.ApiTicTacToe
-import Handler.App
-import Handler.AppEntity
+import Handler.Bot
+import Handler.BotEntity
 import DB (migrate)
 
 mkYesodDispatch "App" resourcesApp

@@ -44,28 +44,28 @@ generateGameId = GameId <$> generateText64 32
 
 --
 
-newtype UserId = UserId Text
+newtype BotId = BotId Text
   deriving (Show, Eq, Ord, IsString, ToText, FromText)
 
-generateUserId :: IO UserId
-generateUserId = UserId <$> generateText64 32
+generateBotId :: IO BotId
+generateBotId = BotId <$> generateText64 32
 
 --
 
-data TUser = TUser
+data TBot = TBot
 
 --
 
 type Step = TL.Step G.State G.Final
-type Result = TL.Result GameId G.Player UserId G.State G.FinalResult
-type Starter = TL.Starter GameId G.Player UserId
-type Lobby = TL.Lobby GameId G.Player UserId IO
+type Result = TL.Result GameId G.Player BotId G.State G.FinalResult
+type Starter = TL.Starter GameId G.Player BotId
+type Lobby = TL.Lobby GameId G.Player BotId IO
 type Session = TL.Session G.Loc G.State G.Final
-type Sessions = TL.Sessions GameId UserId G.Player G.Loc G.State G.Final IO
+type Sessions = TL.Sessions GameId BotId G.Player G.Loc G.State G.Final IO
 type SessionEntry = TL.SessionEntry G.Player G.Loc G.State G.Final IO
-type Registry = TL.Registry UserId TUser IO
-type Results = TL.Results GameId G.Player UserId G.State G.FinalResult IO
-type LabeledSession = TL.LabeledSession UserId G.Loc G.State G.Final
+type Registry = TL.Registry BotId TBot IO
+type Results = TL.Results GameId G.Player BotId G.State G.FinalResult IO
+type LabeledSession = TL.LabeledSession BotId G.Loc G.State G.Final
 
 data Components = Components
   { cLobby :: Lobby
@@ -78,61 +78,63 @@ newComponents :: IO Components
 newComponents = Components
   <$> TL.newLobbyFIFOWithSTM
   <*> TL.newSessionsWithSTM
-  <*> (TL.newRegistryWithSTM (UserId <$> generateText64 32))
+  <*> (TL.newRegistryWithSTM (BotId <$> generateText64 32))
   <*> TL.newResultsWithSTM
 
 --
 
-postStart :: (MonadIO m, T0.TicTacToe'Thrower m) => Components -> UserId -> m T0.Init
-postStart components userId = do
+postStart :: (MonadIO m, T0.TicTacToe'Thrower m) => Components -> Maybe BotId -> m T0.Init
+postStart _ Nothing = T0.ticTacToe'throw T0.Error'Unauthorized
+postStart components (Just botId) = do
   let lobby = cLobby components
   let sessions = cSessions components
-  starter' <- liftIO $ TL.lTransferUser lobby userId
+  starter' <- liftIO $ TL.lTransferUser lobby botId
   case starter' of
     Nothing -> T0.ticTacToe'throw T0.Error'Timeout
     Just TL.Starter{TL.sSessionId,TL.sUserIds} -> do
-      step <- getStep sessions sSessionId userId
+      step <- getStep sessions sSessionId botId
       let gameId = T0.GameId (toText sSessionId)
-      let users = T0.Users { T0.usersO = userIdO, T0.usersX = userIdX }
-          userIdX = T0.UserId (toText $ sUserIds G.Player'X)
-          userIdO = T0.UserId (toText $ sUserIds G.Player'O)
-      return $ T0.Init gameId users (gameStepToApiState step)
+      let bots = T0.Bots { T0.botsO = botIdO, T0.botsX = botIdX }
+          botIdX = T0.BotId (toText $ sUserIds G.Player'X)
+          botIdO = T0.BotId (toText $ sUserIds G.Player'O)
+      return $ T0.Init gameId bots (gameStepToApiState step)
 
-postMove :: (MonadIO m, T0.TicTacToe'Thrower m) => Components -> UserId -> T0.PostMove -> m T0.State
-postMove components userId (T0.PostMove loc gameId) = do
+postMove :: (MonadIO m, T0.TicTacToe'Thrower m) => Components -> Maybe BotId -> T0.PostMove -> m T0.State
+postMove _ Nothing _ = T0.ticTacToe'throw T0.Error'Unauthorized
+postMove components (Just botId) (T0.PostMove loc gameId) = do
   let sessionId = GameId (toText gameId)
   let sessions = cSessions components
   sessionRecord' <- liftIO $ TL.sFindSession sessions sessionId
   case sessionRecord' of
     Nothing -> T0.ticTacToe'throw T0.Error'GameId
     Just sessionRecord -> do
-      case unrep [G.Player'X,G.Player'O] TL.lsUserId (TL.srLabeled sessionRecord) userId of
-        Nothing -> T0.ticTacToe'throw T0.Error'Unauthorized -- Non-existent user id
+      case unrep [G.Player'X,G.Player'O] TL.lsUserId (TL.srLabeled sessionRecord) botId of
+        Nothing -> T0.ticTacToe'throw T0.Error'Unauthorized -- Non-existent bot id
         Just labeledSession -> do
           let session = TL.lsSession labeledSession
           liftIO $ writeChan (TL.sInput session) (G.Loc (T0.locX loc) (T0.locY loc))
           step <- liftIO $ readChan (TL.sStep session)
           return (gameStepToApiState step)
 
-getPlayback :: (MonadIO m, T0.TicTacToe'Thrower m) => Components -> UserId -> T0.GetPlayback -> m T0.Playback
-getPlayback components _userId (T0.GetPlayback gameId) = do
+getPlayback :: (MonadIO m, T0.TicTacToe'Thrower m) => Components -> Maybe BotId -> T0.GetPlayback -> m T0.Playback
+getPlayback components _ (T0.GetPlayback gameId) = do
   let sessionId = GameId (toText gameId)
   result' <- liftIO $ TL.rFindResult (cResults components) sessionId
   case result' of
     Nothing -> T0.ticTacToe'throw T0.Error'GameId
     Just result -> do
-      let userIds p = T0.UserId . toText $ TL.sUserIds (TL.rStarter result) p
-      let x = userIds G.Player'X
-      let o = userIds G.Player'O
+      let botIds p = T0.BotId . toText $ TL.sUserIds (TL.rStarter result) p
+      let x = botIds G.Player'X
+      let o = botIds G.Player'O
       let frames = map gameFrameToApiFrame (G.sFrames $ TL.rState result)
       let apiResult = gameFinalResultToApiResult $ TL.rExtra result
       return $ T0.Playback frames x o apiResult
 
 --
 
-unrep :: [player] -> (session -> UserId) -> (player -> session) -> UserId -> Maybe session
-unrep players sessionToUserId rep userId = List.foldl' (<|>) Nothing $ map
-  (\p -> if userId == sessionToUserId (rep p) then Just (rep p) else Nothing)
+unrep :: [player] -> (session -> BotId) -> (player -> session) -> BotId -> Maybe session
+unrep players sessionToBotId rep botId = List.foldl' (<|>) Nothing $ map
+  (\p -> if botId == sessionToBotId (rep p) then Just (rep p) else Nothing)
   players
 
 gameFrameToApiFrame :: (G.Board, G.Action) -> T0.Frame
@@ -171,18 +173,18 @@ gameLocToApiLoc loc = T0.Loc (G.locX loc) (G.locY loc)
 
 --
 
-getStep :: (MonadIO m, T0.TicTacToe'Thrower m) => Sessions -> GameId -> UserId -> m Step
-getStep sessions gameId userId = do
+getStep :: (MonadIO m, T0.TicTacToe'Thrower m) => Sessions -> GameId -> BotId -> m Step
+getStep sessions gameId botId = do
   sessionRecord' <- liftIO $ TL.sFindSession sessions gameId
   case sessionRecord' of
     Nothing -> T0.ticTacToe'throw T0.Error'GameId
     Just sessionRecord -> do
-      let TL.LabeledSession userIdX sessionX = TL.srLabeled sessionRecord G.Player'X
-      let TL.LabeledSession userIdO sessionO = TL.srLabeled sessionRecord G.Player'O
-      let x = if userIdX == userId then Just sessionX else Nothing
-      let o = if userIdO == userId then Just sessionO else Nothing
+      let TL.LabeledSession botIdX sessionX = TL.srLabeled sessionRecord G.Player'X
+      let TL.LabeledSession botIdO sessionO = TL.srLabeled sessionRecord G.Player'O
+      let x = if botIdX == botId then Just sessionX else Nothing
+      let o = if botIdO == botId then Just sessionO else Nothing
       case x <|> o of
-        Nothing -> T0.ticTacToe'throw T0.Error'Unauthorized -- Can't find by user id
+        Nothing -> T0.ticTacToe'throw T0.Error'Unauthorized -- Can't find by bot id
         Just session -> liftIO $ readChan $ TL.sStep session
 
 forkDispatcher :: Components -> IO ThreadId
@@ -191,20 +193,20 @@ forkDispatcher Components{cSessions,cResults,cLobby} = forkIO $ dispatcher (sess
 dispatcher :: (Starter -> IO SessionEntry) -> Lobby -> Sessions -> IO ()
 dispatcher dispatchSession lobby sessions = forever $ do
   gameId <- generateGameId
-  userIdX <- popUser gameId
-  userIdO <- popUser gameId
-  let playerToUserId = \case G.Player'X -> userIdX; G.Player'O -> userIdO
-  let starter = TL.Starter gameId playerToUserId
+  botIdX <- popBot gameId
+  botIdO <- popBot gameId
+  let playerToBotId = \case G.Player'X -> botIdX; G.Player'O -> botIdO
+  let starter = TL.Starter gameId playerToBotId
   TL.SessionEntry thread playerToSessions <- dispatchSession starter
-  let sessionRecord = TL.SessionRecord thread $ \xo -> TL.LabeledSession (playerToUserId xo) (playerToSessions xo)
+  let sessionRecord = TL.SessionRecord thread $ \xo -> TL.LabeledSession (playerToBotId xo) (playerToSessions xo)
   TL.sInsertSession sessions (gameId, sessionRecord)
   TL.lAnnounceSession lobby starter
   where
-    popUser gameId = do
-      userId' <- TL.lDequeueUser lobby gameId
-      case userId' of
-        Nothing -> popUser gameId
-        Just userId -> return userId
+    popBot gameId = do
+      botId' <- TL.lDequeueUser lobby gameId
+      case botId' of
+        Nothing -> popBot gameId
+        Just botId -> return botId
 
 sessionWorker :: Sessions -> Results -> Starter -> IO SessionEntry
 sessionWorker sessions results starter = do
