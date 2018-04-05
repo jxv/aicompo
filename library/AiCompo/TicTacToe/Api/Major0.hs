@@ -110,8 +110,8 @@ data Board = Board
 
 -- Struct: Loc
 data Loc = Loc
-  { locx :: P.Int
-  , locy :: P.Int
+  { locX :: P.Int
+  , locY :: P.Int
   } deriving (P.Show, P.Eq)
 
 -- Struct: State
@@ -122,8 +122,8 @@ data State = State
 
 -- Struct: Users
 data Users = Users
-  { usersx :: UserId
-  , userso :: UserId
+  { usersX :: UserId
+  , usersO :: UserId
   } deriving (P.Show, P.Eq)
 
 -- Struct: Init
@@ -143,8 +143,8 @@ data Frame = Frame
 -- Struct: Playback
 data Playback = Playback
   { playbackFrames :: [Frame]
-  , playbackx :: UserId
-  , playbacko :: UserId
+  , playbackX :: UserId
+  , playbackO :: UserId
   , playbackResult :: Result
   } deriving (P.Show, P.Eq)
 
@@ -370,11 +370,11 @@ instance R.FromJSON Board where
 
 instance C.ToVal Loc where
   toVal Loc
-    { locx
-    , locy
+    { locX
+    , locY
     } = C.Val'ApiVal P.$ C.ApiVal'Struct P.$ C.Struct P.$ R.fromList
-    [ ("x", C.toVal locx)
-    , ("y", C.toVal locy)
+    [ ("x", C.toVal locX)
+    , ("y", C.toVal locY)
     ]
 
 instance C.FromVal Loc where
@@ -422,11 +422,11 @@ instance R.FromJSON State where
 
 instance C.ToVal Users where
   toVal Users
-    { usersx
-    , userso
+    { usersX
+    , usersO
     } = C.Val'ApiVal P.$ C.ApiVal'Struct P.$ C.Struct P.$ R.fromList
-    [ ("x", C.toVal usersx)
-    , ("o", C.toVal userso)
+    [ ("x", C.toVal usersX)
+    , ("o", C.toVal usersO)
     ]
 
 instance C.FromVal Users where
@@ -507,13 +507,13 @@ instance R.FromJSON Frame where
 instance C.ToVal Playback where
   toVal Playback
     { playbackFrames
-    , playbackx
-    , playbacko
+    , playbackX
+    , playbackO
     , playbackResult
     } = C.Val'ApiVal P.$ C.ApiVal'Struct P.$ C.Struct P.$ R.fromList
     [ ("frames", C.toVal playbackFrames)
-    , ("x", C.toVal playbackx)
-    , ("o", C.toVal playbacko)
+    , ("x", C.toVal playbackX)
+    , ("o", C.toVal playbackO)
     , ("result", C.toVal playbackResult)
     ]
 

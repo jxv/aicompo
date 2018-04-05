@@ -93,7 +93,7 @@ postStart components userId = do
     Just TL.Starter{TL.sSessionId,TL.sUserIds} -> do
       step <- getStep sessions sSessionId userId
       let gameId = T0.GameId (toText sSessionId)
-      let users = T0.Users { T0.userso = userIdO, T0.usersx = userIdX }
+      let users = T0.Users { T0.usersO = userIdO, T0.usersX = userIdX }
           userIdX = T0.UserId (toText $ sUserIds G.Player'X)
           userIdO = T0.UserId (toText $ sUserIds G.Player'O)
       return $ T0.Init gameId users (gameStepToApiState step)
@@ -110,7 +110,7 @@ postMove components userId (T0.PostMove loc gameId) = do
         Nothing -> T0.ticTacToe'throw T0.Error'Unauthorized -- Non-existent user id
         Just labeledSession -> do
           let session = TL.lsSession labeledSession
-          liftIO $ writeChan (TL.sInput session) (G.Loc (T0.locx loc) (T0.locy loc))
+          liftIO $ writeChan (TL.sInput session) (G.Loc (T0.locX loc) (T0.locY loc))
           step <- liftIO $ readChan (TL.sStep session)
           return (gameStepToApiState step)
 
