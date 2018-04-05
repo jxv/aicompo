@@ -20,3 +20,5 @@
 /developer/api-key/#Text/delete/#Text ApiKeyEntityDeleteR POST
 /spa SpaR GET
 /api/tictactoe ApiTicTacToeR GET POST
+/app AppR POST
+/app/#Text/delete AppEntityDeleteR POST

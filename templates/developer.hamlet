@@ -6,31 +6,49 @@
       Apps
     <br />
     <br />
-    $forall (appId,appName,apiKeys) <- appData
-      <div>
-        <b>App Name:&nbsp;
-        <span .key-code>
-          #{appName}
-      <div>
-        <b>App Id:&nbsp;
-        <span .key-code>
-          #{appId}
-        $forall apiKey <- apiKeys
-          <div>
-          <b>API Key:&nbsp;
-          <span .key-code>
-            #{apiKey}
-          <br />
-          <form action=@{ApiKeyEntityDeleteR appId apiKey} method=post>
-            <button type=submit .btn-xs .btn-danger>
-              Delete
-          <br />
-          <br />
-      $if (length apiKeys < 2)
-        <form action=@{ApiKeyR appId} method=post>
-          <button type=submit .btn-sm .btn-primary>
-            Add API Keys
-      <br />
+    <table .table .table-striped>
+      <tbody>
+        $forall (appId,appName,apiKeys) <- appData
+          <tr>
+            <td>
+              <br />
+              <br />
+              <div>
+                <b>App Name:&nbsp;
+                <span .key-code>
+                  #{appName}
+              <div>
+                <b>App Id:&nbsp;
+                <span .key-code>
+                  #{appId}
+              <br />
+              <form action=@{AppEntityDeleteR appId} method=post>
+                <button type=submit .btn-sm .btn-danger>
+                  Delete App
+              <div>
+                $forall apiKey <- apiKeys
+                  <br />
+                  <br />
+                  <div>
+                    <b>API Key:&nbsp;
+                    <span .key-code>
+                      #{apiKey}
+                  <br />
+                  <form action=@{ApiKeyEntityDeleteR appId apiKey} method=post>
+                    <button type=submit .btn-xs .btn-danger>
+                      Delete API Key
+              $if (length apiKeys < 2)
+                <br />
+                <form action=@{ApiKeyR appId} method=post>
+                  <button type=submit .btn-sm .btn-primary>
+                    Add API Key
+              <br />
+              <br />
+    <br />
+    <form action=@{AppR} method=post enctype=#{appFormEnctype}>
+      ^{appFormWidget}
+      <button type=submit .btn-sm .btn-primary>
+        Add App
     <br />
     <hr />
 

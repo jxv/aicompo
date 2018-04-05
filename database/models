@@ -19,6 +19,7 @@ App
   created UTCTime
   public Text
   name Text
+  UniqueAppPublic public
   deriving Show
 
 UserXApp
