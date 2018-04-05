@@ -7,11 +7,14 @@ module Handler.ApiTicTacToe where
 
 import Fluid.Server
 import Fluid.Endpoint
+import Control.Monad.Persist
 
+import qualified DB
 import qualified AiCompo.TicTacToe.Api.Server as Api
 import qualified AiCompo.TicTacToe.Api.Major0 as V0
 import qualified AiCompo.TicTacToe.Service as TS
-import Import
+import Import hiding (selectFirst)
+import Util (exact)
 
 getApiTicTacToeR :: Handler Value
 getApiTicTacToeR = return Api.ticTacToe'spec
@@ -30,7 +33,10 @@ postApiTicTacToeR = do
 ticTacToeMetaMiddleware0 :: V0.Meta -> Handler (Maybe TS.BotId)
 ticTacToeMetaMiddleware0 (V0.Meta Nothing) = return Nothing
 ticTacToeMetaMiddleware0 (V0.Meta (Just (V0.ApiKey apiKey))) = do
-  return Nothing
+  mApikey <- selectFirst [exact DB.ApiKeyKey apiKey] []
+  case mApikey of
+    Nothing -> return Nothing
+    Just (Entity _ DB.ApiKey{DB.apiKeyBot}) -> return $ Just $ TS.BotId apiKeyBot
 
 instance V0.TicTacToe'Thrower Handler
 
