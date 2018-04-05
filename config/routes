@@ -14,10 +14,9 @@
 /site.webmanifest SiteWebmanifestR GET
 /robots.txt RobotsR GET
 / HomeR GET
-/api/authentication ApiAuthenticationR GET POST
 /auth AuthR Auth getAuth
 /developer DeveloperR GET
-/developer/client-credentials ClientCredentialsR POST
-/developer/client-credentials/#Text/delete ClientCredentialsEntityDeleteR POST
+/developer/api-key/#Text ApiKeyR POST
+/developer/api-key/#Text/delete/#Text ApiKeyEntityDeleteR POST
 /spa SpaR GET
 /api/tictactoe ApiTicTacToeR GET POST

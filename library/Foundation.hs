@@ -18,8 +18,6 @@ import Text.Hamlet (hamletFile)
 import Text.Jasmine (minifym)
 import Fluid.Server
 
-import qualified AiCompo.Authentication.Api.Major0 as V0
-
 import qualified DB
 import qualified Yesod.Core.Unsafe as Unsafe
 import qualified Data.CaseInsensitive as CI
@@ -63,7 +61,6 @@ persistToHandler :: PersistT SqlBackend Handler a -> Handler a
 persistToHandler m = runSqlPoolPersistT m =<< asks appConnPool
 
 instance ServiceThrower Handler
-instance V0.Api'Thrower Handler
 
 instance MonadPersist SqlBackend Handler where
   get a = persistToHandler $ P.get a
@@ -165,11 +162,10 @@ instance Yesod App where
   isAuthorized SiteWebmanifestR _ = return Authorized
   isAuthorized RobotsR _ = return Authorized
   isAuthorized (StaticR _) _ = return Authorized
-  isAuthorized ApiAuthenticationR _ = return Authorized
   isAuthorized ApiTicTacToeR _ = return Authorized
   isAuthorized DeveloperR _ = return Authorized
-  isAuthorized ClientCredentialsR _ = return Authorized
-  isAuthorized (ClientCredentialsEntityDeleteR _) _ = return Authorized
+  isAuthorized (ApiKeyR _) _ = return Authorized
+  isAuthorized (ApiKeyEntityDeleteR _ _) _ = return Authorized
   isAuthorized SpaR _ = return Authorized
   addStaticContent ext mime content = do
     master <- getYesod

@@ -7,10 +7,8 @@ import Data.Text.Conversions (toText)
 import Data.Time.Clock
 import Data.Time.Calendar
 import Control.Monad.Persist
-import Database.Persist.Class (PersistEntityBackend, PersistEntity, BaseBackend, PersistField, EntityField)
+import Database.Persist.Class (BaseBackend, PersistField, EntityField)
 import Database.Persist.Types (Filter(..), PersistFilter(..))
-
-import qualified AiCompo.Authentication.Api.Major0 as V0
 
 exact :: PersistField typ => EntityField record typ -> typ -> Filter record
 exact attr val = Filter attr (Left val) Eq
@@ -29,9 +27,6 @@ choice xs = do
 
 generateText64 :: Int -> IO Text
 generateText64 n = fmap toText $ sequence $ replicate n $ choice char64
-
-toDate :: UTCTime -> V0.Date
-toDate utc = let (year, month, day) = toGregorian (utctDay utc) in V0.Date (fromIntegral year) month day
 
 toDateTuple :: UTCTime -> (Int, Int, Int)
 toDateTuple utc = let (year, month, day) = toGregorian (utctDay utc) in (fromIntegral year, month, day)

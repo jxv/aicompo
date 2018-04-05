@@ -8,11 +8,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module AiCompo.User
-  ( genUserPublic
-  , getUser
-  , getUserCount
-  ) where
-
+  () where
+{-
 import Protolude
 import Data.Text.Conversions
 import Control.Monad.Persist
@@ -44,4 +41,6 @@ apiRole = \case
   DB.Role'Member -> V0.Role'Member
 
 getUserCount :: MonadPersist SqlBackend m => () -> m Int
-getUserCount () = count ([] :: [Filter DB.User])
+getUserCount () = count ([] :: [Filter DB.User]
+
+-}

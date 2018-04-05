@@ -15,18 +15,21 @@ UserXGithub
   UniqueUserXGithubGithub github
   deriving Show
 
-ClientCredentials
+App
   created UTCTime
-  user Text
-  clientId Text
-  clientSecret Text
-  UniqueClientCredentialsCilentId clientId
+  public Text
+  name Text
   deriving Show
 
-ClientCredentialsToken
+UserXApp
   created UTCTime
   user Text
-  accessToken Text
-  expiresIn UTCTime
-  UniqueClientCredentialsTokenAccessToken accessToken
+  app Text
+  deriving Show
+
+ApiKey
+  created UTCTime
+  app Text
+  key Text
+  UniqueApiKeyKey key
   deriving Show

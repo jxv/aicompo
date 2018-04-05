@@ -1,34 +1,38 @@
 <h1>
   Developer API
 <br />
-$maybe creds <- mcreds
-  <h2>
-    OAuth2
-  <br />
-  <h4>
-    Client Credentials
-  <br />
-  $forall (clientId,clientSecret) <- creds
-    <div>
-      <b>Client ID:&nbsp;
-      <span .key-code>
-        #{clientId}
-    <div>
-      <b>Client Secret:&nbsp;
-      <span .key-code>
-        #{clientSecret}
-    <br />
-    <form action=@{ClientCredentialsEntityDeleteR clientId} method=post>
-      <button type=submit .btn-xs .btn-danger>
-        Delete
+  $maybe appData <- mAppData
+    <h2>
+      Apps
     <br />
     <br />
-  $if (length creds < 2)
-    <form action=@{ClientCredentialsR} method=post>
-      <button type=submit .btn-sm .btn-primary>
-        Add Keys
-  <br />
-  <hr />
+    $forall (appId,appName,apiKeys) <- appData
+      <div>
+        <b>App Name:&nbsp;
+        <span .key-code>
+          #{appName}
+      <div>
+        <b>App Id:&nbsp;
+        <span .key-code>
+          #{appId}
+        $forall apiKey <- apiKeys
+          <div>
+          <b>API Key:&nbsp;
+          <span .key-code>
+            #{apiKey}
+          <br />
+          <form action=@{ApiKeyEntityDeleteR appId apiKey} method=post>
+            <button type=submit .btn-xs .btn-danger>
+              Delete
+          <br />
+          <br />
+      $if (length apiKeys < 2)
+        <form action=@{ApiKeyR appId} method=post>
+          <button type=submit .btn-sm .btn-primary>
+            Add API Keys
+      <br />
+    <br />
+    <hr />
 
 <h2>
   API Documentation

@@ -35,12 +35,11 @@ import Yesod.Auth.OAuth2.Github
 
 import qualified AiCompo.TicTacToe.Service as TS
 import Import
-import Handler.ApiAuthentication
 import Handler.Resources
 import Handler.Root
 import Handler.Developer
-import Handler.ClientCredentials
-import Handler.ClientCredentialsEntity
+import Handler.ApiKey
+import Handler.ApiKeyEntity
 import Handler.Spa
 import Handler.ApiTicTacToe
 import DB (migrate)
