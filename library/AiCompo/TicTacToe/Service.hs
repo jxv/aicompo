@@ -1,7 +1,7 @@
 module AiCompo.TicTacToe.Service where
 
 import Control.Monad (forever)
-import Control.Applicative ((<|>), (<*>))
+import Control.Applicative ((<|>))
 import Control.Concurrent (readChan, writeChan, forkIO, killThread, ThreadId)
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Reader (ReaderT, runReaderT, MonadReader(..), asks)
@@ -66,28 +66,18 @@ type SessionEntry = TL.SessionEntry G.Player G.Loc G.State G.Final IO
 type Registry = TL.Registry BotId TBot IO
 type Results = TL.Results GameId G.Player BotId G.State G.FinalResult IO
 type LabeledSession = TL.LabeledSession BotId G.Loc G.State G.Final
-
-data Components = Components
-  { cLobby :: Lobby
-  , cSessions :: Sessions
-  , cRegistry :: Registry
-  , cResults :: Results
-  }
+type Components = TL.Components GameId G.Player BotId TBot G.Loc G.State G.FinalResult G.Final IO
 
 newComponents :: IO Components
-newComponents = Components
-  <$> TL.newLobbyFIFOWithSTM
-  <*> TL.newSessionsWithSTM
-  <*> (TL.newRegistryWithSTM (BotId <$> generateText64 32))
-  <*> TL.newResultsWithSTM
+newComponents = TL.newComponentsWithSTM (BotId <$> generateText64 32)
 
 --
 
 postStart :: (MonadIO m, T0.TicTacToe'Thrower m) => Components -> Maybe BotId -> m T0.Init
 postStart _ Nothing = T0.ticTacToe'throw T0.Error'Unauthorized
 postStart components (Just botId) = do
-  let lobby = cLobby components
-  let sessions = cSessions components
+  let lobby = TL.cLobby components
+  let sessions = TL.cSessions components
   starter' <- liftIO $ TL.lTransferUser lobby botId
   case starter' of
     Nothing -> T0.ticTacToe'throw T0.Error'Timeout
@@ -103,7 +93,7 @@ postMove :: (MonadIO m, T0.TicTacToe'Thrower m) => Components -> Maybe BotId -> 
 postMove _ Nothing _ = T0.ticTacToe'throw T0.Error'Unauthorized
 postMove components (Just botId) (T0.PostMove loc gameId) = do
   let sessionId = GameId (toText gameId)
-  let sessions = cSessions components
+  let sessions = TL.cSessions components
   sessionRecord' <- liftIO $ TL.sFindSession sessions sessionId
   case sessionRecord' of
     Nothing -> T0.ticTacToe'throw T0.Error'GameId
@@ -119,7 +109,7 @@ postMove components (Just botId) (T0.PostMove loc gameId) = do
 getPlayback :: (MonadIO m, T0.TicTacToe'Thrower m) => Components -> Maybe BotId -> T0.GetPlayback -> m T0.Playback
 getPlayback components _ (T0.GetPlayback gameId) = do
   let sessionId = GameId (toText gameId)
-  result' <- liftIO $ TL.rFindResult (cResults components) sessionId
+  result' <- liftIO $ TL.rFindResult (TL.cResults components) sessionId
   case result' of
     Nothing -> T0.ticTacToe'throw T0.Error'GameId
     Just result -> do
@@ -188,7 +178,7 @@ getStep sessions gameId botId = do
         Just session -> liftIO $ readChan $ TL.sStep session
 
 forkDispatcher :: Components -> IO ThreadId
-forkDispatcher Components{cSessions,cResults,cLobby} = forkIO $ dispatcher (sessionWorker cSessions cResults) cLobby cSessions
+forkDispatcher TL.Components{TL.cSessions,TL.cResults,TL.cLobby} = forkIO $ dispatcher (sessionWorker cSessions cResults) cLobby cSessions
 
 dispatcher :: (Starter -> IO SessionEntry) -> Lobby -> Sessions -> IO ()
 dispatcher dispatchSession lobby sessions = forever $ do
