@@ -45,6 +45,7 @@
               <br />
               <br />
     <br />
+    <h4>Create Bot
     <form action=@{BotR} method=post enctype=#{botFormEnctype}>
       ^{botFormWidget}
       <button type=submit .btn-sm .btn-primary>

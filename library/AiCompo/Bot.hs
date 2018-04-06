@@ -19,6 +19,7 @@ insertBot userPublic botName = do
   botPublic <- liftIO generateBotPublic
   insert_ (DB.Bot now botPublic botName)
   insert_ (DB.UserXBot now userPublic botPublic)
+  insertApiKey botPublic
 
 insertApiKey :: Text -> Handler ()
 insertApiKey botPublic = do
