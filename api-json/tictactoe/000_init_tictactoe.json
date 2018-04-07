@@ -6,8 +6,8 @@
   "pull": {
     "protocol": "https",
     "name": "TicTacToe",
-    "host": "aicompo.net",
-    "port": 80,
+    "host": "www.aicompo.net",
+    "port": 443,
     "path": "/api/tictactoe",
     "meta": "Meta",
     "error": "Error"
