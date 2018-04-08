@@ -11,7 +11,7 @@
       <tbody>
         $forall (botId,botName,apiKeys) <- botData
           <tr>
-            <td .bot-data>
+            <td style="padding:30px">
               <div>
                 <b>Bot Name:&nbsp;
                 <span .key-code>
@@ -49,6 +49,6 @@
         Add Bot
     <br />
     <hr />
-    
+
 <h2>
   API Documentation
