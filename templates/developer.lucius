@@ -1,3 +1,7 @@
 .app-form-name {
   width: 250px;
 }
+
+.bot-data {
+  padding: 50px;
+}

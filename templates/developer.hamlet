@@ -2,6 +2,7 @@
   Developer API
 <br />
   $maybe botData <- mBotData
+
     <h2>
       Bots
     <br />
@@ -10,9 +11,7 @@
       <tbody>
         $forall (botId,botName,apiKeys) <- botData
           <tr>
-            <td>
-              <br />
-              <br />
+            <td .bot-data>
               <div>
                 <b>Bot Name:&nbsp;
                 <span .key-code>
@@ -42,8 +41,6 @@
                 <form action=@{ApiKeyR botId} method=post>
                   <button type=submit .btn-sm .btn-primary>
                     Add API Key
-              <br />
-              <br />
     <br />
     <h4>Create Bot
     <form action=@{BotR} method=post enctype=#{botFormEnctype}>
@@ -52,6 +49,6 @@
         Add Bot
     <br />
     <hr />
-
+    
 <h2>
   API Documentation

@@ -1,0 +1,65 @@
+fluid:
+  major: 0
+  minor: 0
+
+pull:
+  protocol: https
+  name: LambdaTactics
+  host: www.aicompo.net
+  port: 443
+  path: /api/lambdatactics
+  meta: Meta
+  error: Error
+
+schema:
+  Meta:
+    m: [apiKey: {n: Option, p: ApiKey}]
+  ApiKey: String
+  BotId: String
+  Group: String
+  GameId: String
+  GameToken: String
+
+  Player: [A,B,C,D]
+
+  Error: [GameId, Unauthorized, Move, Timeout]
+
+  Terrain:
+    - Grass
+    - {tag: City, m: [owner: {n: Option, p: Player}]}
+
+  Board:
+    m: [ cells: {n: List, p: {n: List, p: {n: Option, p: Player}}} ]
+
+  Final: [Won, Loss, Tied]
+
+  Move:
+    m: [x: Int, y: Int]
+
+  State:
+    m: [board: Board, final: {n: Option, p: Final}]
+
+  Bots:
+    m: [x: BotId, o: BotId]
+
+  Init:
+    m: [gameId: GameId, users: Bots, state: State]
+
+  Frame:
+    m: [board: Board, move: Move, player: Player]
+
+  Result: [Tie, WinnerX, WinnerO]
+
+  Playback:
+    m: [frames: {n: List, p: Frame}, x: BotId, o: BotId, result: Result]
+
+  PostStart:
+    o: Init
+
+  PostMove:
+    m: [move: Move, gameId: GameId]
+    o: State
+
+  GetPlayback:
+    m: [gameId: GameId]
+    o: Playback
