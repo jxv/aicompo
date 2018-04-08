@@ -7,15 +7,15 @@
       Bots
     <br />
     <br />
-    <table .table .table-striped>
+    <table .table .table-striped .table-bordered>
       <tbody>
         $forall (botId,botName,apiKeys) <- botData
           <tr>
             <td style="padding:30px">
               <div>
-                <b>Bot Name:&nbsp;
-                <span .key-code>
+                <h3 style="font-weight:bold">
                   #{botName}
+              <br />
               <div>
                 <b>Bot Id:&nbsp;
                 <span .key-code>
