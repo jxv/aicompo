@@ -86,23 +86,23 @@ instance TicTacToe'Service meta m => TicTacToe'Service meta (M.ExceptT C.Respons
 
 -- Wrap: ApiKey
 newtype ApiKey = ApiKey R.Text
-  deriving (P.Eq, P.Ord, P.IsString, R.ToText, P.Show)
+  deriving (P.Eq, P.Ord, R.ToMarkup, P.IsString, R.ToText, P.Show)
 
 -- Wrap: BotId
 newtype BotId = BotId R.Text
-  deriving (P.Eq, P.Ord, P.IsString, R.ToText, P.Show)
+  deriving (P.Eq, P.Ord, R.ToMarkup, P.IsString, R.ToText, P.Show)
 
 -- Wrap: Group
 newtype Group = Group R.Text
-  deriving (P.Eq, P.Ord, P.IsString, R.ToText, P.Show)
+  deriving (P.Eq, P.Ord, R.ToMarkup, P.IsString, R.ToText, P.Show)
 
 -- Wrap: GameId
 newtype GameId = GameId R.Text
-  deriving (P.Eq, P.Ord, P.IsString, R.ToText, P.Show)
+  deriving (P.Eq, P.Ord, R.ToMarkup, P.IsString, R.ToText, P.Show)
 
 -- Wrap: GameToken
 newtype GameToken = GameToken R.Text
-  deriving (P.Eq, P.Ord, P.IsString, R.ToText, P.Show)
+  deriving (P.Eq, P.Ord, R.ToMarkup, P.IsString, R.ToText, P.Show)
 
 -- Struct: Meta
 data Meta = Meta

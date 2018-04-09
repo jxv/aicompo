@@ -59,6 +59,7 @@ dependencies:
   - transformers
   - file-embed
   - safe
+  - safe-exceptions
   - mtl
   - unordered-containers
   - containers

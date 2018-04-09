@@ -1,0 +1,9 @@
+<div .container>
+  $maybe playback <- maybePlayback
+    <b>
+      #{T.playbackX playback} 
+  $nothing
+    <p>
+      Not found
+      <br />
+      #{gameId}

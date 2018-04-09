@@ -44,6 +44,9 @@ $else
 <footer .footer>
     <div .container>
       <br />
+      <br />
+      <br />
+      <br />
       <p>
           <a href=@{DeveloperR}>Developer API</a>
           <br />

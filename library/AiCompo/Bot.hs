@@ -19,13 +19,13 @@ insertBot userPublic botName = do
   botPublic <- liftIO generateBotPublic
   insert_ (DB.Bot now botPublic botName)
   insert_ (DB.UserXBot now userPublic botPublic)
-  insertApiKey botPublic
+  insertApiKey userPublic botPublic
 
-insertApiKey :: Text -> Handler ()
-insertApiKey botPublic = do
+insertApiKey :: Text -> Text -> Handler ()
+insertApiKey userPublic botPublic = do
   now <- liftIO getCurrentTime
   apiKey <- liftIO generateApiKey
-  insert_ (DB.ApiKey now botPublic apiKey)
+  insert_ (DB.ApiKey now botPublic apiKey userPublic)
 
 secondsToNominalDiffTime :: Integer -> NominalDiffTime
 secondsToNominalDiffTime = fromInteger

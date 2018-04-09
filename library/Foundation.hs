@@ -164,6 +164,8 @@ instance Yesod App where
   isAuthorized ApiTicTacToeR _ = return Authorized
   isAuthorized DeveloperR _ = return Authorized
   isAuthorized BotR _ = return Authorized
+  isAuthorized TicTacToeR _ = return Authorized
+  isAuthorized (TicTacToePlaybackR _) _ = return Authorized
   isAuthorized (BotEntityDeleteR _) _ = return Authorized
   isAuthorized (ApiKeyR _) _ = return Authorized
   isAuthorized (ApiKeyEntityDeleteR _ _) _ = return Authorized

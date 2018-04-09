@@ -1,16 +1,24 @@
 module AiCompo.TicTacToe.Service where
 
+import Control.Monad.Persist (MonadPersist(insert_, getBy, selectList), SqlBackend, runSqlPoolPersistT)
 import Control.Monad (forever)
 import Control.Applicative ((<|>))
 import Control.Concurrent (readChan, writeChan, forkIO, killThread, ThreadId)
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Reader (ReaderT, runReaderT, MonadReader(..), asks)
 import Control.Monad.State (StateT, evalStateT, MonadState, modify, gets, put, get)
+import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
+import Control.Monad.Trans (lift)
 import qualified Data.List as List
 import qualified Data.Map as Map
 import Data.String (IsString(..))
+import Data.Time.Clock (getCurrentTime)
 import Data.Text (Text)
+import Data.Maybe (catMaybes)
 import Data.Text.Conversions (ToText(..),FromText(..))
+import Data.Traversable (sequence)
+import Database.Persist.Sql (ConnectionPool)
+import Database.Persist.Types (SelectOpt(..), Entity(..))
 
 import qualified TurnLoop.Types as TL
 import qualified TurnLoop.STM as TL
@@ -18,9 +26,12 @@ import qualified TurnLoop.STM as TL
 import System.Random
 import Data.Text.Conversions (toText)
 
+import qualified DB
 import qualified AiCompo.TicTacToe.Api.Server as T
 import qualified AiCompo.TicTacToe.Api.Major0 as T0
 import qualified AiCompo.TicTacToe.Game as G
+
+import Util (exact)
 
 char64 :: [Char]
 char64 = ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9']
@@ -68,8 +79,101 @@ type Results = TL.Results GameId G.Player BotId G.State G.FinalResult IO
 type LabeledSession = TL.LabeledSession BotId G.Loc G.State G.Final
 type Components = TL.Components GameId G.Player BotId TBot G.Loc G.State G.FinalResult G.Final IO
 
-newComponents :: IO Components
-newComponents = TL.newComponentsWithSTM (BotId <$> generateText64 32)
+newComponents :: ConnectionPool -> IO Components
+newComponents pool = do
+  components <- TL.newComponentsWithSTM (BotId <$> generateText64 32)
+  return $ components
+    { TL.cResults = TL.Results
+        { TL.rSaveResult = saveResult' pool
+        , TL.rFindResult = findResult' pool } }
+
+--
+
+saveResult' :: ConnectionPool -> Result -> IO ()
+saveResult' pool TL.Result{TL.rStarter,TL.rState,TL.rExtra} = do
+  now <- getCurrentTime
+  let (GameId gameId) = TL.sSessionId rStarter
+  let (BotId xBotId) = TL.sUserIds rStarter G.Player'X
+  let (BotId oBotId) = TL.sUserIds rStarter G.Player'O
+  let result = finalResultToText rExtra
+  let playback = DB.TicTacToePlayback now gameId (boardToText $ G.sBoard rState) xBotId oBotId result
+  let frames = flip map (zip [0..] $ G.sFrames rState) $ \(idx, (board, action)) -> DB.TicTacToeFrame
+        gameId
+        idx
+        (boardToText board)
+        (G.locX $ G.actLoc action)
+        (G.locY $ G.actLoc action)
+        (toText $ [toCellChar $ G.actPlayer action])
+  flip runSqlPoolPersistT pool $ do
+    insert_ playback
+    mapM_ insert_ frames
+
+findResult' :: ConnectionPool -> GameId -> IO (Maybe Result)
+findResult' pool (GameId gameId) = flip runSqlPoolPersistT pool $ runMaybeT $ do
+  Entity{entityVal} <- MaybeT $ getBy (DB.UniqueTicTacToePlaybackGameId gameId)
+  let starter = TL.Starter (GameId gameId) $ \case
+        G.Player'X -> BotId $ DB.ticTacToePlaybackXBot entityVal
+        G.Player'O -> BotId $ DB.ticTacToePlaybackOBot entityVal
+  board <- MaybeT . return $ textToBoardMay (DB.ticTacToePlaybackBoard entityVal)
+  result <- MaybeT . return $ textToFinalResultMay (DB.ticTacToePlaybackResult entityVal)
+  frames <- lift $ selectList [exact DB.TicTacToeFrameGameId gameId] [Asc DB.TicTacToeFrameIndex]
+  frames' <- flip mapM frames $ \Entity{entityVal=frame} -> do
+    board' <- MaybeT . return $ textToBoardMay (DB.ticTacToeFrameBoard frame)
+    player <- MaybeT . return $ textToPlayer (DB.ticTacToeFramePlayer frame)
+    let loc = G.Loc (DB.ticTacToeFrameLocX frame) (DB.ticTacToeFrameLocY frame)
+    let action = G.Action player loc
+    return (board', action)
+  let state = G.State board frames'
+  return $ TL.Result starter state result
+
+boardToText :: G.Board -> Text
+boardToText G.Board{G.bCells} = toText $ [toCellCharMay $ Map.lookup (G.Loc x y) bCells | y <- [0..2], x <- [0..2]]
+
+finalResultToText :: G.FinalResult -> Text
+finalResultToText = \case
+  G.FinalResult'Tie -> "Tie"
+  G.FinalResult'Winner p -> case p of
+    G.Player'X -> "WinnerX"
+    G.Player'O -> "WinnerO"
+
+textToFinalResultMay :: Text -> Maybe G.FinalResult
+textToFinalResultMay = \case
+  "Tie" -> Just G.FinalResult'Tie
+  "WinnerX" -> Just $ G.FinalResult'Winner G.Player'X
+  "WinnerO" -> Just $ G.FinalResult'Winner G.Player'O
+  _ -> Nothing
+
+toCellCharMay :: Maybe G.Player -> Char
+toCellCharMay = maybe ' ' toCellChar
+
+toCellChar :: G.Player -> Char
+toCellChar G.Player'X = 'X'
+toCellChar G.Player'O = 'O'
+
+textToPlayer :: Text -> Maybe G.Player
+textToPlayer = \case
+  "X" -> Just G.Player'X
+  "O" -> Just G.Player'O
+  _ -> Nothing
+
+charToCell :: Char -> Maybe (Maybe G.Player)
+charToCell = \case
+  'X' -> Just $ Just G.Player'X
+  'O' -> Just $ Just G.Player'O
+  ' ' -> Just $ Nothing
+  _ -> Nothing
+
+textToBoardMay :: Text -> Maybe G.Board
+textToBoardMay s
+  | length stringCells == 9 = do
+      cells <- sequence $ map charToCell stringCells
+      let cells' = catMaybes cells
+      Just . G.Board . Map.fromList $ zip
+        [ G.Loc x y | y <- [0..2], x <- [0..2] ]
+        cells'
+  | otherwise = Nothing
+  where
+    stringCells = fromText s
 
 --
 

@@ -19,5 +19,5 @@ postApiKeyR botPublic = do
       case muserxapp of
         Nothing -> permissionDenied "Unauthorized"
         Just _ -> do
-          insertApiKey botPublic
+          insertApiKey userId botPublic
   redirect DeveloperR

@@ -23,7 +23,6 @@ data Action = Action
 
 data Board = Board
   { bCells :: !(Map Loc Player)
-  , bSize :: !Int
   } deriving (Show, Eq)
 
 data Result
@@ -103,15 +102,15 @@ isOpenLoc' loc = do
 valid :: Loc -> Board -> Bool
 valid loc b = isLocInsideBoard && isCellEmpty
   where
-    isLocInsideBoard = inside loc b
+    isLocInsideBoard = inside loc
     isCellEmpty = not (Map.member loc (bCells b))
 
-inside :: Loc -> Board -> Bool
-inside loc b = locX loc >= 0 && locX loc < bSize b && locY loc >= 0 && locY loc < bSize b
+inside :: Loc -> Bool
+inside loc= locX loc >= 0 && locX loc < 3 && locY loc >= 0 && locY loc < 3
 
 insertPlayer :: Loc -> Player -> Board -> Board
 insertPlayer loc player b
-  | inside loc b = b { bCells = Map.insert loc player (bCells b) }
+  | inside loc = Board { bCells = Map.insert loc player (bCells b) }
   | otherwise = b
 
 insertAtLoc' :: HasBoard m => Loc -> Player -> m ()
@@ -128,26 +127,26 @@ getResult' = do
     result b
       | isWinner Player'X b = Result'Final $ FinalResult'Winner Player'X
       | isWinner Player'O b = Result'Final $ FinalResult'Winner Player'O
-      | Map.size (bCells b) == (bSize b) ^ (2 :: Int) = Result'Final FinalResult'Tie
+      | Map.size (bCells b) == 3 ^ (2 :: Int) = Result'Final FinalResult'Tie
       | otherwise = Result'Unfinished
     isWinner :: Player -> Board -> Bool
     isWinner p b =
       or [all has [Loc x y | y <- q] | x <- q] ||
       or [all has [Loc x y | x <- q] | y <- q] ||
       all has [Loc z z | z <- q] ||
-      all has [Loc z (bSize b - 1 - z) | z <- q]
+      all has [Loc z (3 - 1 - z) | z <- q]
       where
         has loc = Map.lookup loc (bCells b) == Just p
         q = indices b
     indices :: Board -> [Int]
-    indices b = [0 .. bSize b - 1]
+    indices b = [0 .. 3 - 1]
 
 class Monad m => HasBoard m where
   getBoard :: m Board
   putBoard :: Board -> m ()
 
 emptyBoard :: Board
-emptyBoard = Board Map.empty 3
+emptyBoard = Board Map.empty
 
 getOpponent :: Player -> Player
 getOpponent Player'X = Player'O

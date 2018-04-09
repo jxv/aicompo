@@ -32,5 +32,25 @@ ApiKey
   created UTCTime
   bot Text
   key Text
+  user Text
   UniqueApiKeyKey key
+  deriving Show
+
+TicTacToeFrame
+  gameId Text
+  index Int
+  board Text
+  locX Int
+  locY Int
+  player Text
+  deriving Show
+
+TicTacToePlayback
+  created UTCTime
+  gameId Text
+  board Text
+  xBot Text
+  oBot Text
+  result Text
+  UniqueTicTacToePlaybackGameId gameId
   deriving Show

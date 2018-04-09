@@ -43,6 +43,8 @@ import Handler.ApiKeyEntity
 import Handler.ApiTicTacToe
 import Handler.Bot
 import Handler.BotEntity
+import Handler.TicTacToe
+import Handler.TicTacToePlayback
 import DB (migrate)
 
 mkYesodDispatch "App" resourcesApp
@@ -57,16 +59,23 @@ makeFoundation appSettings = do
   appStatic <-
     (if appMutableStatic appSettings then staticDevel else static)
     (appStaticDir appSettings)
-  appTicTacToeComponents <- TS.newComponents
-  _ <- TS.forkDispatcher appTicTacToeComponents
-  let mkFoundation appConnPool = App {..} -- chiken and the egg problem
-  let tempFoundation = mkFoundation $ error "connPool forced in tempFoundation"
+
+  -- chicken and the egg problem
+  let mkFoundation appConnPool = do
+        appTicTacToeComponents <- TS.newComponents appConnPool
+        _ <- TS.forkDispatcher appTicTacToeComponents
+        return App {..}
+  let mkFoundation' appConnPool = let
+        appTicTacToeComponents = error "appTicTacToeComponents forced in tempFoundation"
+        in App{..}
+
+  let tempFoundation = mkFoundation' $ error "connPool forced in tempFoundation"
   let logFunc = messageLoggerSource tempFoundation appLogger
   pool <- flip runLoggingT logFunc $ createPostgresqlPool
     (pgConnStr  $ appDatabaseConf appSettings)
     (pgPoolSize $ appDatabaseConf appSettings)
   migrate (pgConnStr $ appDatabaseConf appSettings)
-  return $ mkFoundation pool
+  mkFoundation pool
   where
     loadPlugin f prefix = do
         clientId <- getEnv $ prefix <> "_CLIENT_ID"
