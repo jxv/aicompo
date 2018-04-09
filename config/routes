@@ -18,7 +18,6 @@
 /developer DeveloperR GET
 /developer/api-key/#Text ApiKeyR POST
 /developer/api-key/#Text/delete/#Text ApiKeyEntityDeleteR POST
-/spa SpaR GET
 /api/tictactoe ApiTicTacToeR GET POST
 /bot BotR POST
 /bot/#Text/delete BotEntityDeleteR POST

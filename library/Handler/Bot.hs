@@ -1,14 +1,10 @@
 module Handler.Bot where
 
 import Yesod.Core.Handler (notAuthenticated)
-import Control.Monad.Persist
-import Yesod.Form.Bootstrap3 (BootstrapFormLayout (..), renderBootstrap3)
 
-import qualified DB
 import Import hiding (selectFirst)
 import AiCompo.Bot
 import HandlerUtil
-import Util
 import Handler.Developer
 
 postBotR :: Handler Html

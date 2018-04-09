@@ -126,7 +126,6 @@ instance Yesod App where
     mmsg <- getMessage
     muser <- maybeAuthPair
     mcurrentRoute <- getCurrentRoute
-    (title, parents) <- breadcrumbs
     let menuItems =
           [ NavbarRight $ MenuItem
               { menuItemLabel = "Login"
@@ -168,7 +167,6 @@ instance Yesod App where
   isAuthorized (BotEntityDeleteR _) _ = return Authorized
   isAuthorized (ApiKeyR _) _ = return Authorized
   isAuthorized (ApiKeyEntityDeleteR _ _) _ = return Authorized
-  isAuthorized SpaR _ = return Authorized
   addStaticContent ext mime content = do
     master <- getYesod
     let staticDir = appStaticDir $ appSettings master

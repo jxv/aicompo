@@ -40,7 +40,6 @@ import Handler.Root
 import Handler.Developer
 import Handler.ApiKey
 import Handler.ApiKeyEntity
-import Handler.Spa
 import Handler.ApiTicTacToe
 import Handler.Bot
 import Handler.BotEntity
