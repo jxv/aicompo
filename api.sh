@@ -19,6 +19,6 @@ gen_api() {
 }
 
 gen_api "tictactoe" "TicTacToe"
-gen_api "lambdatactics" "LambdaTactics"
+# gen_api "lambdatactics" "LambdaTactics"
 
 # fluid -l haskell -s api-json/tictactoe -m CompoAi.Api.TicTacToe -n TicTacToe -d ./src/CompoAi/Api -e client -a http-client
