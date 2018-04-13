@@ -31,5 +31,7 @@ generateText64 n = fmap toText $ sequence $ replicate n $ choice char64
 toDateTuple :: UTCTime -> (Int, Int, Int)
 toDateTuple utc = let (year, month, day) = toGregorian (utctDay utc) in (fromIntegral year, month, day)
 
+toDateString :: UTCTime -> String
+toDateString time = (\(year, month, day) -> show year `mappend` " / " `mappend` show month `mappend` " / " `mappend` show day)(toDateTuple time)
 pamf :: Functor f => f a -> (a -> b) -> f b
 pamf = flip fmap

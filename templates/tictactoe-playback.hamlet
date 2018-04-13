@@ -1,17 +1,17 @@
 <div .container>
   $maybe playback <- maybePlayback
     <span style="font-size: 1.2em; font-weight: bold">
-      Game Id:
+      Game:
     <code>
       #{gameId}
     <br />
     <span style="font-size: 1.2em; font-weight: bold">
-      X Bot Id:
+      X Bot:
     <code>
       #{T.playbackX playback}
     <br />
     <span style="font-size: 1.2em; font-weight: bold">
-      O Bot Id:
+      O Bot:
     <code>
        #{T.playbackO playback}
     <br />

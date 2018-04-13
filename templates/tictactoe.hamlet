@@ -4,9 +4,18 @@
       <div .page-header>
         <h1 #start>
           Tic Tac Toe
-        April 2018
       <div>
         <h3>
           Played Games
-        <a href=@{TicTacToePlaybackR "test"}>
-          X vs O
+        $forall playback <- playbacks
+          Game:
+          <a href=@{TicTacToePlaybackR (DB.ticTacToePlaybackGameId playback)}>
+            #{DB.ticTacToePlaybackGameId playback}
+          <br />
+          Date: #{toDateString (DB.ticTacToePlaybackCreated playback)}
+          <br />
+          Bot X: #{DB.ticTacToePlaybackXBot playback}
+          <br />
+          Bot O: #{DB.ticTacToePlaybackOBot playback}
+          <br />
+          <br />
