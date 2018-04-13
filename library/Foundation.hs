@@ -123,7 +123,7 @@ instance Yesod App where
   yesodMiddleware = defaultYesodMiddleware
   defaultLayout widget = do
     master <- getYesod
-    mmsg <- getMessage
+    -- mmsg <- getMessage
     muser <- maybeAuthPair
     mcurrentRoute <- getCurrentRoute
     let menuItems =

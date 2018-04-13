@@ -17,3 +17,9 @@ getTicTacToePlaybackR gamePublic = do
   defaultLayout $ do
     setTitle "AI {COMPO}"
     $(widgetFile "tictactoe-playback")
+
+showResult :: T.Result -> Text
+showResult = \case
+  T.Result'WinnerX -> "Winner X"
+  T.Result'WinnerO -> "Winner O"
+  T.Result'Tie -> "Tie"

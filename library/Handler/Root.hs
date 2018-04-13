@@ -7,7 +7,7 @@ import Import
 
 getHomeR :: Handler Html
 getHomeR = do
-  sess <- getSession
+  -- sess <- getSession
   defaultLayout $ do
     aDomId <- newIdent
     setTitle "AI {COMPO}"

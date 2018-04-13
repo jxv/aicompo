@@ -1,7 +1,27 @@
 <div .container>
   $maybe playback <- maybePlayback
-    <b>
-      #{T.playbackX playback} 
+    <span style="font-size: 1.2em; font-weight: bold">
+      Game Id:
+    <code>
+      #{gameId}
+    <br />
+    <span style="font-size: 1.2em; font-weight: bold">
+      X Bot Id:
+    <code>
+      #{T.playbackX playback}
+    <br />
+    <span style="font-size: 1.2em; font-weight: bold">
+      O Bot Id:
+    <code>
+       #{T.playbackO playback}
+    <br />
+    <span style="font-size: 1.2em; font-weight: bold">
+      Result:
+    #{showResult (T.playbackResult playback)}
+    <br />
+    <br />
+    <canvas #canvas>
+
   $nothing
     <p>
       Not found

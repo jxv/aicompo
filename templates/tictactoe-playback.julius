@@ -1,0 +1,117 @@
+function getPlayback() {
+  return #{toJSON maybePlayback};
+}
+
+var canvas, ctx;
+
+function drawX(x,y,s) {
+  ctx.lineWidth=s;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(5*s+x,5*s+y);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(5*s+x,y);
+  ctx.lineTo(x, 5*s+y);
+  ctx.stroke();
+}
+
+function drawRedX(x,y,s) {
+  ctx.strokeStyle = 'red';
+  drawX(x,y,s);
+}
+
+function drawO(x,y,s) {
+  ctx.lineWidth=s;
+  ctx.setLineDash([])
+  ctx.beginPath();
+  ctx.ellipse(x+s*Math.PI-s/2, y+s*Math.PI-s/2, s*Math.PI-s/2, s*Math.PI-s/2, 45 * Math.PI/180, 0, 2 * Math.PI);
+  ctx.stroke();
+}
+
+function drawBlueO(x,y,s) {
+  ctx.strokeStyle = 'blue';
+  drawO(x,y,s);
+}
+
+function drawGrid(x,y,s) {
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth=s;
+
+  (function(){ // horizontal
+    const w = scale * 7 * 3;
+    const h = scale * 6.5;
+    // top horizontal
+    ctx.beginPath();
+    ctx.moveTo(x, y + h);
+    ctx.lineTo(x + w, y + h);
+    ctx.stroke();
+    // bottom horizontal
+    ctx.beginPath();
+    ctx.moveTo(x, y + h * 2.25);
+    ctx.lineTo(x + w, y + h * 2.25);
+    ctx.stroke();
+  })();
+
+  (function(){ // vertical
+    const w = scale * 6.5;
+    const h = scale * 7 * 3;
+    // left vertical
+    ctx.beginPath();
+    ctx.moveTo(x + w, y);
+    ctx.lineTo(x + w, y + h);
+    ctx.stroke();
+    // right vertical
+    ctx.beginPath();
+    ctx.moveTo(x + w * 2.25, y);
+    ctx.lineTo(x + w * 2.25, y + h);
+    ctx.stroke();
+  })();
+}
+
+function drawBoard(x,y,s,board) {
+  drawGrid(x, y, s);
+  for (var j = 0; j < 3; j++) {
+    for (var i = 0; i < 3; i++) {
+      var cell = board.cells[j][i] || {};
+      const pos = {
+        x: x + i * s * 8,
+        y: y + j * s * 8,
+      };
+      (cell.tag === 'X' ? drawRedX : cell.tag === 'O' ? drawBlueO : function(){})
+        (pos.x, pos.y, s);
+    }
+  }
+}
+
+function drawSquare(x,y,s,color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, s, s);
+}
+
+const scale = 10;
+const side = 23 * scale;
+const spacing = 20;
+const skip = side + spacing;
+
+var playback = getPlayback();
+
+if (playback) {
+  const frames = playback.frames;
+
+  canvas = document.getElementById('canvas');
+  ctx = canvas.getContext('2d');
+  ctx.canvas.width = side;
+  ctx.canvas.height = skip * frames.length;
+
+  for (var i = 0; i < frames.length; i++) {
+    const frame = frames[i];
+    const border = { x: 10, y: 10 };
+    const position = { x: border.x, y: border.y + skip * i };
+    var board = frame.board;
+    var color = frame.player.tag === 'X' ? '#fee' : '#eef';
+    drawSquare(0, (side+spacing) * i, side, color);
+    drawBoard(position.x, position.y, scale, board)
+  }
+}

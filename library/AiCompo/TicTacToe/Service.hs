@@ -1,6 +1,6 @@
 module AiCompo.TicTacToe.Service where
 
-import Control.Monad.Persist (MonadPersist(insert_, getBy, selectList), SqlBackend, runSqlPoolPersistT)
+import Control.Monad.Persist (MonadPersist(insert_, getBy, selectList), runSqlPoolPersistT)
 import Control.Monad (forever)
 import Control.Applicative ((<|>))
 import Control.Concurrent (readChan, writeChan, forkIO, killThread, ThreadId)
@@ -27,7 +27,6 @@ import System.Random
 import Data.Text.Conversions (toText)
 
 import qualified DB
-import qualified AiCompo.TicTacToe.Api.Server as T
 import qualified AiCompo.TicTacToe.Api.Major0 as T0
 import qualified AiCompo.TicTacToe.Game as G
 
