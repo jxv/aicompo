@@ -93,15 +93,15 @@ function drawSquare(x,y,s,color) {
 function drawText(x,y,text,font) {
   ctx.fillStyle = 'white';
   ctx.strokeStyle = 'black';
-  ctx.lineWidth = 5;
+  ctx.lineWidth = 10;
   ctx.font = font;
   ctx.strokeText(text, x, y);
   ctx.fillText(text, x, y);
 }
 
-const scale = 10;
+const scale = 20;
 const side = 23 * scale;
-const spacing = 40;
+const spacing = 60;
 const skip = side + spacing;
 
 function stepFrame(playback, ctx) {
@@ -110,14 +110,14 @@ function stepFrame(playback, ctx) {
     const frames = playback.frames;
     const frameIndex = Math.floor(secondTicks * 0.5) % frames.length;
     const frame = frames[frameIndex];
-    const position = { x: 10, y: 10 + spacing};
+    const position = { x: 1 * scale, y: 1 * scale + spacing};
     var board = frame.board;
     var color = frame.player.tag === 'X' ? '#fee' : '#eef';
 
     ctx.clearRect(0,0,ctx.canvas.width, ctx.canvas.height)
     drawSquare(0, spacing, side, color);
     drawBoard(position.x, position.y, scale, board);
-    drawText(10, 24, (frameIndex + 1) + ' / ' + frames.length, '18px Nova Mono');
+    drawText(10, 40, (frameIndex + 1) + ' / ' + frames.length, '36px Nova Mono');
     window.requestAnimationFrame(stepFrame(playback, ctx));
   }
 }
@@ -127,7 +127,10 @@ var playback = getPlayback();
 if (playback) {
   canvas = document.getElementById('canvas');
   ctx = canvas.getContext('2d');
+  ctx.scale(2,2);
   ctx.canvas.width = side;
   ctx.canvas.height = side + spacing;
+  canvas.style.width = +(side / 2) + 'px';
+  canvas.style.height = +((side + spacing) / 2) + 'px';
   window.requestAnimationFrame(stepFrame(playback, ctx));
 }
