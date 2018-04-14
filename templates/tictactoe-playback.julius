@@ -101,7 +101,7 @@ function drawText(x,y,text,font) {
 
 const scale = 10;
 const side = 23 * scale;
-const spacing = 20;
+const spacing = 40;
 const skip = side + spacing;
 
 function stepFrame(playback, ctx) {
@@ -117,7 +117,7 @@ function stepFrame(playback, ctx) {
     ctx.clearRect(0,0,ctx.canvas.width, ctx.canvas.height)
     drawSquare(0, spacing, side, color);
     drawBoard(position.x, position.y, scale, board);
-    drawText(10, 18, (frameIndex + 1) + ' / ' + frames.length, '18px Nova Mono');
+    drawText(10, 24, (frameIndex + 1) + ' / ' + frames.length, '18px Nova Mono');
     window.requestAnimationFrame(stepFrame(playback, ctx));
   }
 }
