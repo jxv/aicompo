@@ -166,10 +166,11 @@ textToBoardMay :: Text -> Maybe G.Board
 textToBoardMay s
   | length stringCells == 9 = do
       cells <- sequence $ map charToCell stringCells
-      let cells' = catMaybes cells
-      Just . G.Board . Map.fromList $ zip
-        [ G.Loc x y | y <- [0..2], x <- [0..2] ]
-        cells'
+      let cells' = zip
+            [ G.Loc x y | y <- [0..2], x <- [0..2] ]
+            cells
+      let cells'' = map (\(loc,cell) -> (,) <$> pure loc <*> cell) cells'
+      Just . G.Board . Map.fromList $ catMaybes cells''
   | otherwise = Nothing
   where
     stringCells = fromText s
